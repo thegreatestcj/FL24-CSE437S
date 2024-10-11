@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Register</title>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="w-full max-w-md mx-auto bg-white shadow-lg rounded-lg p-8">
+            <h1 class="text-2xl font-bold mb-4">Register</h1>
+            {% if messages %}
+            {% for message in messages %}
+                <div class="bg-red-500 text-white p-2 rounded mb-4">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="username" class="block pb-2 text-sm font-medium text-gray-700">Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-4">
+                    <label for="email" class="block pb-2 text-sm font-medium text-gray-700">Email</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ form.email.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="block pb-1 text-sm font-medium text-gray-700">Password</label>
+                    <p class="pb-3 text-xs text-gray-500 mt-1">
+                        Your password must be at least 8 characters long and include both letters and numbers.
+                    </p>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ form.password.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-4">
+                    <label for="confirm_password" class="block pb-2 text-sm font-medium text-gray-700">Confirm your password</label>
+                    {{ form.confirm_password }}
+                    {% if form.confirm_password.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ form.confirm_password.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="mt-6">
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Register</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

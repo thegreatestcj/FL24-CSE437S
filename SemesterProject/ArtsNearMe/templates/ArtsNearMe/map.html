@@ -1,0 +1,177 @@
+{% extends 'ArtsNearMe/index.html' %}
+
+{% block title %}
+Map | ArtsNearMe
+{% endblock %}
+
+{% block content %}
+<div style="height: 100%;" class="flex w-full h-full">
+
+    <!-- Left section: Map (70%) -->
+    <div id="map" style="width: 72%; height: 1800px;" class="w-[72%] h-full"></div>
+    <!-- Right section: List of places (30%) -->
+    <div class="w-[28%] bg-white overflow-y-auto p-4">
+        <h2 class="text-2xl font-bold p-4">Places Near Me</h2>
+        <div id="places-list" class="w-full max-w-lg bg-white rounded-lg shadow-md p-4 overflow-y-auto">
+            <!-- The list of places will be rendered here -->
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    let isUserLoggedIn = {{ login_status|yesno:"true,false" }};
+    let map, infoWindow;
+    const mapID = '9f8b4bb546abc551';
+    async function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: -34.397, lng: 150.644 },
+            zoom: 15,
+            mapId: mapID,
+        })
+        infoWindow = new google.maps.InfoWindow();
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const center = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                };
+                map.setCenter(center);
+                console.log("Center confirmed");
+                nearbySearch(center);
+            },
+            () => {
+                handleLocationError(true, infoWindow, map.getCenter());
+            }
+            )
+        } else {
+            handleLocationError(false, infoWindow, map.getCenter());
+        }
+    }
+
+    async function nearbySearch(center) {
+        const { Place, SearchNearbyRankPreference } = await google.maps.importLibrary("places");
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+        const request = {
+            fields: ["displayName", "formattedAddress", "location", "websiteURI",
+                    "nationalPhoneNumber", "svgIconMaskURI", "photos",],
+            locationRestriction: {
+                center: center,
+                radius: 30000,
+            },
+            includedPrimaryTypes: ["art_gallery", "museum"],
+            maxResultCount: 8,
+            rankPreference: SearchNearbyRankPreference.POPULARITY,
+            language: "en-US",
+            region: "us",
+        };
+
+        const { places } = await Place.searchNearby(request);
+
+        if (places.length) {
+            console.log(places);
+            places.forEach(place => {
+                const marker = new AdvancedMarkerElement({
+                    map,
+                    position: place.location,
+                }
+                )
+            });
+            displayPlaces(places);
+        } else {
+            console.log('no results');
+        }
+    }
+
+    function displayPlaces(places) {
+        const placesList = document.getElementById("places-list");
+        places.forEach(place => {
+                // Create a container for each place
+                const placeContainer = document.createElement("div");
+                placeContainer.className = "py-4 border-b last:border-b-0";
+
+                const textContainer = document.createElement("div");
+                textContainer.className = "flex justify-between items-start mb-4"
+
+                const imageContainer = document.createElement("div");
+                imageContainer.className = "w-full h-48 bg-gray-200 rounded-lg overflow-hidden"
+
+                const infoContainer = document.createElement("div");
+                infoContainer.className = "flex-1 pr-4";
+
+                const buttonContainer = document.createElement("div");
+                buttonContainer.className = "flex flex-col items-end space-y-2";
+
+                // Create elements for name, location, and description
+                const nameElement = document.createElement("h4");
+                nameElement.className = "text-xl font-semibold text-gray-800";
+                nameElement.textContent = place.displayName;
+
+                const locationElement = document.createElement("p");
+                locationElement.className = "text-sm text-gray-400";
+                locationElement.textContent = place.formattedAddress;
+
+                const websiteLinkElement = document.createElement("a");
+                websiteLinkElement.textContent = "Visit Website";
+                websiteLinkElement.href = place.websiteURI;
+                websiteLinkElement.target = "_blank";
+                websiteLinkElement.rel = "noopener noreferrer";
+                websiteLinkElement.className = "bg-slate-600 text-white text-xs font-medium py-2 px-4 rounded hover:bg-slate-800";
+                buttonContainer.appendChild(websiteLinkElement);
+
+                if (isUserLoggedIn) {
+                    const addFavoritesElement = document.createElement("button");
+                    addFavoritesElement.className = "bg-green-500 text-white text-xs font-medium py-2 px-4 rounded hover:bg-green-600";
+                    addFavoritesElement.textContent = "Add to Favorites";
+                    buttonContainer.appendChild(addFavoritesElement);
+                }
+
+                // const iconContainer = document.createElement("div");
+                // iconContainer.className = "icon-frame";
+                // const iconElement = document.createElement("img");
+                // iconElement.src = place.svgIconMaskURI;
+                // iconElement.alt = place.displayName;
+                // iconContainer.appendChild(iconElement);
+                // const descriptionElement = document.createElement("p");
+                // descriptionElement.className = "text-gray-500";
+                // descriptionElement.textContent = place.description;
+                const imageElement = document.createElement("img");
+                imageElement.className = "object-cover w-full h-full";
+                imageElement.src = place.photos[0].getURI({maxHeight: 400});
+                imageElement.alt = place.displayName;
+                imageContainer.appendChild(imageElement);
+                // Append elements to the place container
+                infoContainer.appendChild(nameElement);
+                infoContainer.appendChild(locationElement);
+
+                buttonContainer.appendChild(websiteLinkElement);
+                // placeContainer.appendChild(descriptionElement);
+                textContainer.appendChild(infoContainer);
+                textContainer.appendChild(buttonContainer);
+
+                placeContainer.appendChild(textContainer);
+                placeContainer.appendChild(imageContainer);
+                // placeContainer.appendChild(iconContainer);
+                // Append the place container to the places list
+                placesList.appendChild(placeContainer);
+            });
+    }
+
+    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(
+            browserHasGeolocation
+                ? "Error: The Geolocation service failed."
+                : "Error: Your browser doesn't support geolocation",
+        );
+        infoWindow.open(map);
+    }
+
+    window.onload = initMap;
+    console.log("map loaded");
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&loading=async&libraries=places" async defer></script>
+    <title>{% block title %}ArtsNearMe{% endblock %}</title>
+</head>
+<body>
+  <header class="p-4 text-white">
+      <nav class="fixed top-0 left-0 w-full bg-gray-100 dark:bg-gray-800 p-4 shadow-md z-10">
+        <div class="container mx-auto flex justify-between items-center">
+          <!-- Website Name -->
+          <div>
+            <a href="{% url 'home' %}" class="text-xl font-bold text-gray-800 dark:text-gray-100">
+              ArtsNearMe
+            </a>
+          </div>
+      
+          <!-- Navigation Menu -->
+          <div class="flex items-center space-x-6">
+            <a href="{% url 'map' %}" class="text-gray-800 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-300">
+                See Nearby
+              </a>
+            <!-- If user is authenticated, show dropdown -->
+            {% if user.is_authenticated %}
+              <div class="relative group">
+                <button class="focus:outline-none text-gray-800 dark:text-gray-100">
+                  {{ user.username }}
+                  <svg class="w-5 h-5 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+      
+                <!-- Dropdown Menu -->
+                <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600">
+                    Profile
+                  </a>
+                  <a href="{% url 'register' %}" class="block px-4 py-2 text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600">
+                    Logout
+                  </a>
+                </div>
+              </div>
+            {% else %}
+              <!-- If not authenticated, show login/register links -->
+              <a href="{% url 'login' %}" class="text-gray-800 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-300">
+                Login
+              </a>
+              <a href="{% url 'register' %}" class="text-gray-800 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-300">
+                Register
+              </a>
+            {% endif %}
+          </div>
+        </div>
+    </nav>
+  </header>
+  <main class="container h-full w-full p-4 mt-4">
+    {% block content %}
+    {% endblock %}
+  </main>
+  {% block script %}
+  {% endblock %}
+</body>
+</html>
