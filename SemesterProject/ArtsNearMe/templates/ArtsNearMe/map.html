@@ -24,7 +24,7 @@ Map | ArtsNearMe
 <script>
     let isUserLoggedIn = {{ login_status|yesno:"true,false" }};
     let map, infoWindow;
-    const mapID = '9f8b4bb546abc551';
+    const mapID = '9f8b4bb546abc551'; // Need to pass from an env var
     async function initMap() {
         map = new google.maps.Map(document.getElementById("map"), {
             center: { lat: -34.397, lng: 150.644 },

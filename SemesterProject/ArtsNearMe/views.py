@@ -20,6 +20,7 @@ env = environ.Env()
 environ.Env.read_env('.env')
 google_maps_api_key = env('GOOGLE_MAPS_API_KEY')
 ticketmaster_api_key = env('TICKETMASTER_API_KEY')
+artsnearme_map_id = env('ARTSNEARME_MAP_ID')
 
 def index(request):
     return render(request, 'ArtsNearMe/index.html')
@@ -76,6 +77,7 @@ def map_view(request):
 
     context = {        
         'google_maps_api_key': google_maps_api_key,
+        'artsnearme_map_id': artsnearme_map_id,
         'events': events,
         'login_status': request.user.is_authenticated,
         
