@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&loading=async&libraries=places" async defer></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <title>{% block title %}ArtsNearMe{% endblock %}</title>
 </head>
 <body>
@@ -57,7 +59,7 @@
         </div>
     </nav>
   </header>
-  <main class="container h-full w-full p-4 mt-4">
+  <main class="container h-full w-full p-4 pr-0 mt-4">
     {% block content %}
     {% endblock %}
   </main>

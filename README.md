@@ -11,4 +11,8 @@ The correct folder structure looks like this:
 ## Features that will be added after the MVP production
 Authentication: login/register success/ pop-up windows; login token validation; Forget your password feature; login form autocomplete
 Homepage: Toggle light/dark themes; Webpage logo design;
+
+Local museums place map: 
+user should be able to adjust the search radius (50km max). When there's no available place in range, set up a reminder banner.
+
 Local museums place list: some places might not have an official website. Currently, it always displays a ref link at the end of each place item. I'll add a conditional logic to that later; independent scrolling (from the map on the left);
