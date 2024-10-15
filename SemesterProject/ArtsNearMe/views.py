@@ -33,7 +33,7 @@ ticketmaster_api_key = env('TICKETMASTER_API_KEY')
 artsnearme_map_id = env('ARTSNEARME_MAP_ID')
 
 def index(request):
-    return render(request, 'ArtsNearMe/index.html', { 'login_status': request.user.is_authenticated, })
+    return render(request, 'ArtsNearMe/home.html', { 'login_status': request.user.is_authenticated, })
 
 class UserRegisterView(CreateView):
     form_class = RegisterForm
