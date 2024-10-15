@@ -34,14 +34,59 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'ArtsNearMe',
+    # Django default apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Third-party apps for REST and OAuth
+    'rest_framework',  # Django REST Framework
+    'rest_framework.authtoken',  # Token authentication support
+    'dj_rest_auth',  # Provides endpoints for login/logout/registration, etc.
+    'allauth',  # django-allauth for OAuth
+    'allauth.account',
+    'allauth.socialaccount',  # Social login support
+    'allauth.socialaccount.providers.google',  # Include social providers (e.g., Google, Facebook)
+    'rest_framework_simplejwt.token_blacklist',  # For JWT token blacklisting
+
+    # Your custom apps
+    'ArtsNearMe',  # Replace with your actual app
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+# Add Django Allauth and REST-Auth settings
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'no-reply@artsnearme.com'  # Replace with your app's email or domain
+
+
+# JWT settings
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+SITE_ID = 1  # Required for Django Allauth
+
+LOGIN_REDIRECT_URL = '/'  # Redirect after login
+LOGOUT_REDIRECT_URL = '/'  # Redirect after logout
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -51,6 +96,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'SemesterProject.urls'
@@ -58,7 +104,7 @@ ROOT_URLCONF = 'SemesterProject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "ArtsNearMe/templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

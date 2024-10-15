@@ -1,0 +1,50 @@
+{% extends 'ArtsNearMe/index.html' %}
+{% block title %}
+Profile | ArtsNearMe
+{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="w-full max-w-lg mx-auto bg-white shadow-lg rounded-lg p-8">
+        <h1 class="text-3xl font-bold mb-6 text-center">Welcome, {{ user.username }}!</h1>
+
+        {% comment %} <!-- Profile Picture -->
+        <div class="flex justify-center mb-6">
+            <div class="w-24 h-24 rounded-full overflow-hidden">
+                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="w-full h-full object-cover">
+            </div>
+        </div> {% endcomment %}
+
+        <!-- Email Field -->
+        <div class="mb-4">
+            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+            <div class="bg-gray-100 px-4 py-2 rounded-md">
+                <p>{{ user.email }}</p>
+            </div>
+        </div>
+
+        {% comment %} <!-- Bio Field -->
+        <div class="mb-4">
+            <label for="bio" class="block text-sm font-medium text-gray-700">Bio</label>
+            <div class="bg-gray-100 px-4 py-2 rounded-md">
+                <p>{{ user.profile.bio }}</p>
+            </div>
+        </div> {% endcomment %}
+
+        <!-- Join Date -->
+        <div class="mb-4">
+            <label for="join_date" class="block text-sm font-medium text-gray-700">Joined on</label>
+            <div class="bg-gray-100 px-4 py-2 rounded-md">
+                <p>{{ user.date_joined|date:"F j, Y" }}</p>
+            </div>
+        </div>
+
+        <!-- Logout Button -->
+<form method="POST" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="bg-red-500 text-white w-full px-4 py-2 rounded-md hover:bg-red-600">
+        Logout
+    </button>
+</form>
+    </div>
+</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-from django.views import View
+from django.urls import reverse_lazy
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -6,14 +6,14 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 # Create your views here.
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
-from .forms import RegisterForm, LoginForm
+from django.contrib.auth import login, logout, authenticate, get_backends
+from django.contrib.auth.views import *
+from .forms import *
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
 import environ
 import requests
-from django.http import JsonResponse
 from datetime import datetime
 import pytz
 from django.utils import timezone
@@ -21,6 +21,9 @@ from collections import defaultdict
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import AllowAny
+from django.views.generic import TemplateView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .forms import *
 
 # Initialize environment variables
 env = environ.Env()
@@ -30,46 +33,91 @@ ticketmaster_api_key = env('TICKETMASTER_API_KEY')
 artsnearme_map_id = env('ARTSNEARME_MAP_ID')
 
 def index(request):
-    return render(request, 'ArtsNearMe/index.html')
+    return render(request, 'ArtsNearMe/index.html', { 'login_status': request.user.is_authenticated, })
 
-def user_register(request):
-    if request.method == 'POST':
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.password = make_password(user.password)
-            user.save()
-            login(request, user)
-            return redirect('home')
-    else:
-        form = RegisterForm()
-    return render(request, 'ArtsNearMe/register.html', {'form': form})
+class UserRegisterView(CreateView):
+    form_class = RegisterForm
+    template_name = 'ArtsNearMe/register.html'
+    success_url = reverse_lazy('profile')
 
-def user_login(request):
-    if request.method == 'POST':
-        form = LoginForm(request.POST)
-        if form.is_valid():  # Validate the form
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(request, username=username, password=password)
+    def form_valid(self, form):
+        user = form.save()
+        backend = get_backends()[0]
+        login(self.request, user)  # Automatically log the user in after registration
+        return redirect('profile')
+    
+    def form_invalid(self, form):
+    # For an invalid form, simply re-render the page with the form errors
+        return self.render_to_response(self.get_context_data(form=form))
 
-            if user is not None:
-                login(request, user)
-                messages.success(request, "Login successful!")
-                return redirect('home')  # Change 'home' to your home view name
-            else:
-                messages.error(request, "Invalid username or password.")
-        else:
-            messages.error(request, "Please correct the errors below.")
-    else:
-        form = LoginForm()  # Create an empty form instance
+    def dispatch(self, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect('profile')  # Redirect to the profile if the user is already logged in
+        return super().dispatch(*args, **kwargs)   
 
-    return render(request, 'ArtsNearMe/login.html', {'form': form})
+class UserLoginView(LoginView):
+    form_class = LoginForm
+    template_name = 'ArtsNearMe/login.html'
 
-@login_required
-def user_logout(request):
-    logout(request)
-    return redirect('home')
+    def get_success_url(self):
+        return reverse_lazy('profile')
+
+    def dispatch(self, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect('profile')  # Redirect to the profile if the user is already logged in
+        return super().dispatch(*args, **kwargs)
+
+class UserProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'ArtsNearMe/profile.html'
+
+    # This attribute defines the login URL to which the user will be redirected
+    # if they are not authenticated
+    login_url = '/api/login/'  # or use the name of your login URL, e.g., 'login'
+
+    # Optional: You can also set this to redirect to a custom page after login
+    redirect_field_name = 'next'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add any extra context you want to pass to the template
+        context['user'] = self.request.user
+        return context
+
+
+class PasswordResetRequestView(PasswordResetView):
+    form_class = PasswordResetRequestForm
+    template_name = 'ArtsNearMe/password_reset.html'
+    success_url = reverse_lazy('password_reset_done')
+    def dispatch(self, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect('profile')  # Redirect to profile or home if the user is already logged in
+        return super().dispatch(*args, **kwargs)
+
+class PasswordResetRequestDoneView(PasswordResetDoneView):
+    template_name = 'ArtsNearMe/password_reset_done.html'
+    def dispatch(self, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect('profile')  # Redirect to profile or home if the user is already logged in
+        return super().dispatch(*args, **kwargs)
+
+class PasswordResetRequestConfirmView(PasswordResetConfirmView):
+    form_class = SetNewPasswordForm
+    template_name = 'ArtsNearMe/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+    def dispatch(self, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect('profile')  # Redirect to profile or home if the user is already logged in
+        return super().dispatch(*args, **kwargs)
+
+class PasswordResetRequestCompleteView(PasswordResetCompleteView):
+    template_name = 'ArtsNearMe/password_reset_complete.html'
+    def dispatch(self, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect('profile')  # Redirect to profile or home if the user is already logged in
+        return super().dispatch(*args, **kwargs)
+
+class UserLogoutView(LogoutView):
+    next_page = reverse_lazy('home')
 
 # Nearby Map Display
 class MapAPIView(APIView):

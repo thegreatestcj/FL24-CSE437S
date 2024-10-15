@@ -11,7 +11,7 @@ The correct folder structure looks like this:
 ## Features that will be added after the MVP production
 Authentication: 
 
-login/register success/ pop-up windows; login token validation; Forget your password feature; login form autocomplete; replace traditional FBV with CBV with REST framework APIViews; **CSRF token**.
+login/register success/ pop-up windows (make it more user-friendly); login token validation; Forget your password feature; login form autocomplete; replace traditional FBV with CBV with REST framework APIViews; **CSRF token**.
 
 Homepage: Toggle light/dark themes; Webpage logo design;
 
