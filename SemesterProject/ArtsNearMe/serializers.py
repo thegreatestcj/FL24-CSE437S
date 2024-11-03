@@ -1,45 +1,53 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
+from .services import * 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'first_name', 'last_name']
+class EventSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    date_time = serializers.CharField()
+    url = serializers.URLField()
+    venue_id = serializers.CharField()
+    event_id = serializers.CharField()
+    date_time_str = serializers.CharField(required=False, allow_null=True)
 
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
-    confirm_password = serializers.CharField(write_only=True, required=True)
+    def to_representation(self, instance):
+        # Convert Event instance to a dictionary using its `to_dict` method
+        return instance.to_dict()
 
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'confirm_password']
+class EventVenueSerializer(serializers.Serializer):
+    event_venue = serializers.CharField()
+    eventname = serializers.CharField()
+    date_time = serializers.CharField()
+    venue_id = serializers.CharField()
+    date_time_str = serializers.CharField(required=False, allow_null=True)
+    images = serializers.ListField(child=serializers.URLField(), required=False)
+    placename = serializers.CharField(required=False, allow_null=True)
+    address = serializers.CharField(required=False, allow_null=True)
+    eventdates = serializers.DictField(
+    child=serializers.ListField(
+        child=serializers.CharField(),
+        min_length=2,
+        max_length=2
+    ),
+    required=False,
+    allow_null=True
+)
 
-    def validate(self, data):
-        """
-        Check that the two password entries match.
-        """
-        if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError("Passwords do not match.")
-        return data
+    def to_representation(self, instance):
+        # Use instance's to_dict method to generate a dictionary representation
+        return instance.to_dict()
 
-    def create(self, validated_data):
-        # Remove confirm_password from validated_data since it's not needed in the DB
-        validated_data.pop('confirm_password')
-        user = User.objects.create_user(**validated_data)
-        return user
+class MapMarkerSerializer(serializers.Serializer):
+    venue_id = serializers.CharField()
+    placename = serializers.CharField()
+    address = serializers.CharField(required=False, allow_null=True)
+    location = serializers.DictField(child=serializers.FloatField(), required=False)
+    events = EventSerializer(many=True)
+    images = serializers.ListField(
+    child=serializers.URLField(), required=False, allow_empty=True
+)
 
-class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
-
-    def validate_new_password(self, value):
-        try:
-            validate_password(value)
-        except ValidationError as exc:
-            raise serializers.ValidationError(str(exc))
-        return value
-
-class ResetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    def to_representation(self, instance):
+        # Ensure all fields, including images, are included
+        representation = instance.to_dict()
+        representation['images'] = getattr(instance, 'images', [])
+        return representation

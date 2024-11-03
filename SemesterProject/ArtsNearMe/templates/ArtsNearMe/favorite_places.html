@@ -1,0 +1,48 @@
+<!-- favorite_places.html -->
+{% extends "ArtsNearMe/index.html" %}
+
+{% block title %}
+Favorite Places | ArtsNearMe
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto flex px-4 py-8 space-x-6 h-screen">
+    <!-- Sidebar -->
+
+    <aside class="w-1/4 bg-gray-50 rounded-lg shadow-md p-6 overflow-y-auto">
+        {% include 'ArtsNearMe/_sidebar.html' %}
+    </aside>
+
+    <!-- Main Profile Section -->
+    <section class="w-3/4 bg-white shadow-lg rounded-lg p-8 overflow-y-auto">
+        <h2 class="text-2xl font-bold mb-4">Favorite Places</h2>
+
+        <!-- Toggle Buttons for List and Map Views -->
+        <div class="flex space-x-4 mb-4">
+            <button id="list-view-btn" class="py-2 px-4 bg-sky-800 text-white rounded">List View</button>
+            <button id="map-view-btn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded">Map View</button>
+        </div>
+    
+        <!-- List View (default) -->
+        <div id="list-view" class="space-y-4">
+            {% for place in favorite_places %}
+                <div class="border p-4 rounded shadow-md">
+                    <h3 class="text-xl font-semibold">{{ place.place_name }}</h3>
+                    <p>Address: {{ place.place_address }}</p>
+                    {% if place.place_website %}
+                        <p>Website: <a href="{{ place.place_website }}" target="_blank" class="text-blue-600 underline">{{ place.place_website }}</a></p>
+                    {% endif %}
+                    <p>Coordinates: {{ place.place_latitude }}, {{ place.place_longitude }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    
+        <!-- Map View (hidden by default) -->
+        <div id="map-view" class="hidden" style="height: 500px;">
+            <div id="map" class="border p-4 rounded shadow-md h-full"></div>
+        </div>
+
+
+    </section>
+</div>
+{% endblock %}

@@ -1,34 +1,119 @@
 {% extends 'ArtsNearMe/index.html' %}
 {% load static %}
+<link rel="stylesheet" href="{% static 'ArtsNearMe/css/map.css' %}">
 
 {% block title %}
 Nearby | ArtsNearMe
 {% endblock %}
 
 {% block content %}
-<div style="height: 100% width: 100%" class="flex w-full h-full">
+<div style="height: 100%; width: 100%" class="flex w-full h-screen">
     {{ events|json_script:'events' }}
+    {{ google_maps_api_key|json_script:'mapApiKey'}}
+    <!-- Location Permission Modal -->
+    <div id="location-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-20">
+        <div class="bg-white rounded-lg shadow-lg w-3/4 md:w-1/3 p-6 text-center">
+            <h2 class="text-lg font-bold mb-2">Location Permission Needed</h2>
+            <p class="text-gray-600 mb-4">To find nearby events and places, please allow location access.</p>
+            <button id="allow-location-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Allow Location Access
+            </button>
+        </div>
+    </div>
     <!-- Left section: Map (70%) -->
-    <div id="map" style="width: 72%; height: 1800px;" class="w-[72%] h-full"></div>
-    <!-- Right section: List of places (30%) -->
-    <div id="place-list-container" class="w-[28%] bg-white overflow-y-auto pl-2">
-        <div id="button-group" class="flex justify-between w-full my-2">
-            <!-- Left Button: "Places" -->
+    <div id="map" style="width: 72%; height: calc(100vh - 64px);" class="w-[72%] h-full overflow-y-auto"></div>
+    <!-- Loading Overlay for the Map -->
+    <div id="map-loading-overlay" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+        <div class="text-center text-white">
+            <div class="loader mb-2"></div> <!-- Optional: A spinner loader -->
+            <p>Loading map...</p>
+        </div>
+    </div>
+    <!-- Right Section Container: Place List and Detail Panel -->
+    <div id="place-list-container" class="w-[28%] h-full bg-white overflow-y-auto pl-2">
+        <div id="button-group" class="flex justify-between w-full mb-1">
             <button id="places-button" class="w-1/2 py-2 text-sm font-medium rounded-l-lg bg-sky-800 text-white hover:bg-sky-950 active-button">
                 Places
             </button>
-            <!-- Right Button: "Events" -->
             <button id="events-button" class="w-1/2 py-2 text-sm font-medium rounded-r-lg bg-gray-300 text-gray-800 hover:bg-gray-400">
                 Events
             </button>
         </div>
-        <div id="places-list" class="w-full max-w-lg bg-white rounded-lg shadow-md p-2 pl-4 pt-0 overflow-y-auto">
-            <!-- The list of places will be rendered here -->
 
+        <!-- Places List container -->
+        <div id="places-list" class="w-full max-w-lg bg-white rounded-lg shadow-md p-2 pl-4 pt-0 overflow-y-auto h-[calc(100vh-100px)]">
+            <!-- List of places will render here -->
+            <div id="places-unavailable" class="hidden text-center text-gray-600 p-4">
+                Places are unavailable due to restricted location access. Please enable location services.
+            </div>
         </div>
-        <div id="events-list" class="w-full max-w-lg bg-white rounded-lg shadow-md p-2 pl-4 pt-0 overflow-y-auto hidden">
+
+        <!-- Event list container -->
+        <div id="events-list" class="hidden w-full max-w-lg bg-white rounded-lg shadow-md p-2 pl-4 pt-0 overflow-y-auto h-[calc(100vh-100px)]">
+            <!-- The list of events will be rendered here -->
+            <div id="events-unavailable" class="hidden text-center text-gray-600 p-4">
+                Events are unavailable due to restricted location access. Please enable location services.
+            </div>
         </div>
     </div>
+
+
+
+    <div id="place-detail-panel" class="fixed top-0 right-0 w-[28%] h-full bg-white shadow-lg overflow-y-auto transition-transform transform translate-x-full z-10">
+        <div class="p-4 border-b">
+            <button id="place-back-button" class="text-sky-800 font-semibold">Go Back</button>
+        </div>
+        <div class="p-4">
+            <h2 id="place-name" class="text-xl font-bold mb-2">Place Name</h2>
+            <p id="place-address" class="text-gray-500 mb-4">Place Address</p>
+    
+            <!-- Place Image Carousel -->
+            <div id="place-image-carousel" class="relative w-full h-48 bg-gray-200 rounded-lg overflow-hidden mb-4">
+                <img id="place-carousel-image" class="object-cover w-full h-full transition-opacity duration-1000 opacity-100" alt="Place Image">
+                
+                <!-- Navigation Controls -->
+                <button id="place-prev-button" class="absolute top-1/2 left-2 -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full">‹</button>
+                <button id="place-next-button" class="absolute top-1/2 right-2 -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full">›</button>
+    
+                <!-- Image Indicators (Dots) -->
+                <div id="place-carousel-indicators" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2">
+                    <!-- Dots will be appended here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <div id="venue-detail-panel" class="fixed top-0 right-0 w-[28%] h-full bg-white shadow-lg overflow-y-auto transition-transform transform translate-x-full z-10">
+        <div class="p-4 border-b">
+            <button id="venue-back-button" class="text-sky-800 font-semibold">Go Back</button>
+        </div>
+        <div class="p-4">
+            <h2 id="venue-name" class="text-xl font-bold mb-2">Venue Name</h2>
+            <p id="venue-address" class="text-gray-500 mb-4">Venue Address</p>
+    
+            <!-- Venue Image Carousel -->
+            <div id="venue-image-carousel" class="relative w-full h-48 bg-gray-200 rounded-lg overflow-hidden mb-4">
+                <img id="venue-carousel-image" class="object-cover w-full h-full transition-opacity duration-1000 opacity-100" alt="Venue Image">
+                
+                <!-- Navigation Controls -->
+                <button id="venue-prev-button" class="absolute top-1/2 left-2 -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full">‹</button>
+                <button id="venue-next-button" class="absolute top-1/2 right-2 -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full">›</button>
+    
+                <!-- Image Indicators (Dots) -->
+                <div id="venue-carousel-indicators" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2">
+                    <!-- Dots will be appended here dynamically -->
+                </div>
+            </div>
+    
+            <div id="venue-events" class="mt-4">
+                <!-- Event details will be populated here -->
+            </div>
+        </div>
+    </div>
+    
+
+    
 
 </div>
 {% endblock %}
@@ -36,6 +121,7 @@ Nearby | ArtsNearMe
 {% block script %}
 <script>
     let isUserLoggedIn = "{{ login_status|yesno:"true,false" }}" === "true";
+    console.log('User Login: ', isUserLoggedIn)
 </script>
 <script src="{% static "ArtsNearMe/js/map.js" %}?v={{ timestamp }}"></script>
 {% endblock %}

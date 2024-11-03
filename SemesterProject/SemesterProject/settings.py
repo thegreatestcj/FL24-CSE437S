@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os
 import environ
 env = environ.Env()
 environ.Env.read_env()
@@ -65,7 +66,6 @@ REST_FRAMEWORK = {
 # Add Django Allauth and REST-Auth settings
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -98,6 +98,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 ROOT_URLCONF = 'SemesterProject.urls'
 
@@ -184,3 +188,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"  # Make sure this directory exists for pr
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'

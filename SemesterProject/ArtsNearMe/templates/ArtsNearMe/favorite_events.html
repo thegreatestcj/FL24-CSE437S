@@ -1,0 +1,62 @@
+<!-- favorite_events.html -->
+{% extends "ArtsNearMe/index.html" %}
+{% load static %}
+
+{% block title %}
+Favorite Events | ArtsNearMe
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto flex px-4 py-8 space-x-6 h-screen">
+    <!-- Sidebar -->
+
+    <aside class="w-1/4 bg-gray-50 rounded-lg shadow-md p-6 overflow-y-auto">
+        {% include 'ArtsNearMe/_sidebar.html' %}
+    </aside>
+
+    <!-- Main Profile Section -->
+    <section class="w-3/4 bg-white shadow-lg rounded-lg p-8 overflow-y-auto">
+        <h2 class="text-2xl font-bold mb-4">Favorite Events</h2>
+
+        <!-- Toggle Buttons for List and Calendar Views -->
+        <div class="flex space-x-4 mb-4">
+            <button id="list-view-btn" class="py-2 px-4 bg-sky-800 text-white rounded">List View</button>
+            <button id="calendar-view-btn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded">Calendar View</button>
+        </div>
+    
+        <!-- List View (default) -->
+        <div id="list-view" class="space-y-4">
+            {% for event in favorite_events %}
+                <div class="border p-4 rounded shadow-md">
+                    <h3 class="text-xl font-semibold">{{ event.event_name }}</h3>
+                    <p>Location: {{ event.event_venue }}</p>
+                    <p>Address: {{ event.event_address }}</p>
+                    <p>Date: {{ event.event_start_time }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    
+        <!-- Calendar View (hidden by default) -->
+        <div id="calendar-view" class="hidden">
+            <div id="calendar" class="border p-4 rounded shadow-md"></div>
+        </div>
+    
+        <!-- To Be Determined Events Section -->
+        <h3 class="text-lg font-semibold mt-4">To Be Determined Events</h3>
+        <div class="space-y-4">
+            {% for event in tbd_events %}
+                <div class="border p-4 rounded shadow-md">
+                    <h3 class="text-xl font-semibold">{{ event.event_name }}</h3>
+                    <p>Venue: {{ event.event_venue }}</p>
+                    <p>Address: {{ event.event_address }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    </section>
+</div>
+{% endblock %}
+{% block script %}
+<script src="{% static "ArtsNearMe/js/favoriteEvents.js" %}?v={{ timestamp }}"></script>
+{% endblock %}

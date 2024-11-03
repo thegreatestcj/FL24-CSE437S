@@ -1,0 +1,36 @@
+/* custom.css */
+#venue-detail-panel.show {
+    transform: translateX(0);
+}
+
+#place-carousel-image, #venue-carousel-image {
+    transition: opacity 0.5s ease, transform 0.5s ease; /* Smooth fade and movement */
+}
+
+#map-loading-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 20;
+}
+
+/* Optional loader animation */
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
