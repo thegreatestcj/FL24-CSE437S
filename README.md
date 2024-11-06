@@ -31,3 +31,8 @@ some places might not have an official website. Currently, it always displays a 
 Nearby event list:
 
 We might add an event list item detail page to show up after user clicks an item in the event list.
+
+## Features that will be added after the Beta Production
+All expectations above for the Beta ver completed.
+
+
