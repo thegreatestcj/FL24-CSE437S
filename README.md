@@ -1,11 +1,9 @@
-# FL24-CSE437S Semester Project by Mercy and Rylan
+# FL24-CSE437S Semester Project by Rylan Tang
 
 ## Folder Structure
 Top Directory, 'SemesterProject', is the **project folder/root directory**.
 The virtual environment directory should be in the same directory with the project folder, and it should be ignored by GitHub as they are specific to developers' devices.
 When we create a Django project by command line, say called 'SemesterProject', it will automatically create a sub directory with **the same name, which is called the main project folder (NOT the project folder/root directory, which is its parent dir)**. This main project folder should be on the same level with app folders. So I realized we were working on the wrong folder structure all time and created this new branch, moving all our previous work to it.
-
-The correct folder structure looks like this:
 
 
 ## Features that will be added after the MVP production
@@ -34,5 +32,6 @@ We might add an event list item detail page to show up after user clicks an item
 
 ## Features that will be added after the Beta Production
 All expectations above for the Beta ver completed.
+See the updated Kanban PR in GitHub Projects
 
 
