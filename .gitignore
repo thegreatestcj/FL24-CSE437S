@@ -5,3 +5,5 @@ db.sqlite3
 *.env
 .vscode
 .idea
+/SemesterProject/docker-compose.yml
+/SemesterProject/docker-compose-copy.yml
