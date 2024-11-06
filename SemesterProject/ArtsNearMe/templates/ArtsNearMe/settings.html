@@ -1,0 +1,50 @@
+<!-- favorite_events.html -->
+{% extends "ArtsNearMe/index.html" %}
+{% load static %}
+
+{% block title %}
+Favorite Events | ArtsNearMe
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto flex px-4 py-8 space-x-6 h-screen">
+    <!-- Sidebar -->
+
+    <aside class="w-1/4 bg-gray-50 rounded-lg shadow-md p-6 overflow-y-auto">
+        {% include 'ArtsNearMe/_sidebar.html' %}
+    </aside>
+
+    <!-- Settings Sub-Sidebar and Content Area -->
+    <div class="w-3/4 flex space-x-6">
+        
+        <!-- Sub-Sidebar for Settings Options -->
+        <aside class="w-1/4 bg-gray-50 rounded-lg shadow-md p-6">
+            <ul class="space-y-4">
+                <li>
+                    <a href="{% url 'change_password' %}"
+                       class="block px-4 py-2 rounded-md text-gray-800 hover:bg-slate-200
+                              {% if request.path == '/api/v1/profile/settings/change-password/' %}bg-slate-500 text-white{% endif %}">
+                        Change Password
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'delete_account' %}"
+                       class="block px-4 py-2 rounded-md text-gray-800 hover:bg-slate-200
+                              {% if request.path == '/api/v1/profile/settings/delete-account/' %}bg-slate-500 text-white{% endif %}">
+                        Delete Account
+                    </a>
+                </li>
+                <!-- Add more settings options as needed -->
+            </ul>
+        </aside>
+
+        <!-- Content Area to be Overridden -->
+        <section class="w-3/4 bg-white shadow-lg rounded-lg p-6">
+            {% block settings_content %}{% endblock %}
+        </section>
+
+    </div>
+
+</div>
+{% endblock %}
+

@@ -29,7 +29,8 @@ SECRET_KEY = 'django-insecure-w8d9f1m=37ebld*8k0cxkabp&c19o23d(w7=+bgkc05%pilyj&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0']
+
 
 
 # Application definition
@@ -85,6 +86,7 @@ SIMPLE_JWT = {
 
 SITE_ID = 1  # Required for Django Allauth
 
+LOGIN_URL = '/api/v1/login/'
 LOGIN_REDIRECT_URL = '/'  # Redirect after login
 LOGOUT_REDIRECT_URL = '/'  # Redirect after logout
 

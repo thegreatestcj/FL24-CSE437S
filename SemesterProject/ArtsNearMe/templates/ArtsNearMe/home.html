@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<h1 class="text-3xl font-bold text-center mb-8">Discover Arts Near You</h1>
+<h1 class="text-3xl font-bold text-center my-4">Discover Arts Near You</h1>
         
 <!-- Swiper Container -->
 <div class="swiper-container">
@@ -11,33 +11,58 @@
         <div class="swiper-slide flex flex-col items-center justify-center bg-white rounded-lg shadow-lg p-8">
             <h2 class="text-2xl font-semibold mb-4">Explore Nearby Art Venues</h2>
             <p class="text-gray-600 text-center">Find galleries, museums, and art events in your area with our interactive map.</p>
-            <img src="{% static 'ArtsNearMe/images/creative_map.png' %}" alt="Map Preview" class="w-full h-64 object-cover rounded mt-4">
+            <a href="{% url 'map' %}">
+                <img src="{% static 'ArtsNearMe/images/creative_map.png' %}" alt="Map Preview" class="w-full h-64 object-cover rounded mt-4">
+            </a>
         </div>
 
         <!-- Slide 2: Events Feature -->
         <div class="swiper-slide flex flex-col items-center justify-center bg-white rounded-lg shadow-lg p-8">
             <h2 class="text-2xl font-semibold mb-4">Upcoming Art Events</h2>
             <p class="text-gray-600 text-center">Stay updated with the latest art exhibitions and events happening around you.</p>
-            <img src="{% static 'ArtsNearMe/images/art_exhibitions.png' %}" alt="Events Preview" class="w-full h-64 object-cover rounded mt-4">
+            <a href="{% url 'map' %}#events" onclick="redirectToEvents()">
+                <img src="{% static 'ArtsNearMe/images/art_exhibitions.png' %}" alt="Events Preview" class="w-full h-64 object-cover rounded mt-4">
+            </a>
         </div>
 
         <!-- Slide 3: User Profile Feature -->
         <div class="swiper-slide flex flex-col items-center justify-center bg-white rounded-lg shadow-lg p-8">
             <h2 class="text-2xl font-semibold mb-4">Create Your Profile</h2>
             <p class="text-gray-600 text-center">Personalize your experience and save your favorite art spots and events.</p>
-            <img src="{% static 'ArtsNearMe/images/nice_profile.png' %}" alt="Profile Preview" class="w-full h-64 object-cover rounded mt-4">
+            <a href="{% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'login' %}{% endif %}">
+                <img src="{% static 'ArtsNearMe/images/nice_profile.png' %}" alt="Profile Preview" class="w-full h-64 object-cover rounded mt-4">
+            </a>
         </div>
 
         <!-- Slide 4: Community Feature -->
         <div class="swiper-slide flex flex-col items-center justify-center bg-white rounded-lg shadow-lg p-8">
             <h2 class="text-2xl font-semibold mb-4">Join the Art Community</h2>
             <p class="text-gray-600 text-center">Connect with other art enthusiasts, share experiences, and explore together.</p>
-            <img src="{% static 'ArtsNearMe/images/art_community.png' %}" alt="Community Preview" class="w-full h-64 object-cover rounded mt-4">
+            <a>
+                <img src="{% static 'ArtsNearMe/images/art_community.png' %}" alt="Community Preview" class="w-full h-64 object-cover rounded mt-4">
+            </a>
         </div>
     </div>
 
     <!-- Swiper Pagination & Navigation -->
     <div class="swiper-pagination mt-4"></div>
 </div>
-{% endblock%}
+{% endblock %}
 
+{% block script %}
+<script>
+function redirectToEvents() {
+    // Set a flag in sessionStorage to indicate the need to redirect to the events tab
+    sessionStorage.setItem('redirectToEvents', 'true');
+}
+
+// Use jQuery to handle the click event on the events feature link
+$(document).ready(function() {
+    $('[data-target="events"]').on('click', function(event) {
+        event.preventDefault(); // Prevent immediate navigation
+        redirectToEvents();     // Call the redirect function
+        window.location.href = "{% url 'map' %}"; // Redirect to the map page
+    });
+});
+</script>
+{% endblock %}

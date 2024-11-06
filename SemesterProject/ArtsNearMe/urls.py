@@ -31,8 +31,9 @@ urlpatterns = [
     path('profile/update/', update_profile, name='update_profile'),
     path('profile/favorite-places/', favorite_places, name='favorite_places'),
     path('profile/favorite-events/', favorite_events, name='favorite_events'),
-]
 
-# Serve media files during development
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # User settings
+    path('profile/settings/', redirect_to_change_password, name='settings'),  # Redirects to change password
+    path('profile/settings/change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('profile/settings/delete-account/', DeleteAccountView.as_view(), name='delete_account'),
+]

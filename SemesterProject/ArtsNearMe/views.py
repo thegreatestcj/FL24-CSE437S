@@ -30,6 +30,7 @@ from .services import *
 from .models import *
 from django.http import JsonResponse
 import json
+from django.views import View
 
 # Initialize environment variables
 env = environ.Env()
@@ -63,30 +64,31 @@ class UserRegisterView(CreateView):
         return super().dispatch(*args, **kwargs)   
 
 class UserLoginView(LoginView):
-    form_class = LoginForm
     template_name = 'ArtsNearMe/login.html'
+    form_class = LoginForm
+    redirect_authenticated_user = True
+    next_page = 'profile' 
+    success_url = reverse_lazy('profile')  # Used only if `next` is not provided
 
-    def get_success_url(self):
-        return reverse_lazy('profile')
+    def form_valid(self, form):
+        """Display a success message after login and proceed with default behavior."""
+        messages.success(self.request, "Logged in successfully!")
+        return super().form_valid(form)
 
-    def dispatch(self, *args, **kwargs):
-        if self.request.user.is_authenticated:
-            return redirect('profile')  # Redirect to the profile if the user is already logged in
-        return super().dispatch(*args, **kwargs)
+    def form_invalid(self, form):
+        """Display an error message if login fails and re-render the form."""
+        messages.error(self.request, "Incorrect credentials. Please try again.")
+        return self.render_to_response(self.get_context_data(form=form))
 
 class UserProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'ArtsNearMe/profile.html'
-
-    # This attribute defines the login URL to which the user will be redirected
-    # if they are not authenticated
-    login_url = '/api/login/'  # or use the name of your login URL, e.g., 'login'
-
-    # Optional: You can also set this to redirect to a custom page after login
-    redirect_field_name = 'next'
+    
+    # Specify the prefixed login URL
+    login_url = '/api/v1/login/'  # Ensures unauthenticated users are redirected to the correct login path
+    redirect_field_name = 'next'  # Keeps the default, allowing redirection to the intended page after login
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add any extra context you want to pass to the template
         context['user'] = self.request.user
         context['form'] = ProfileUpdateForm(user=self.request.user, instance=self.request.user.profile)
         return context
@@ -381,7 +383,6 @@ def update_profile(request):
             return redirect('profile')  # Redirect to the profile page or any desired page
         else:
             messages.error(request, "There was an error updating your profile. Please check the form for details.")
-            print(form.errors)
     else:
         # If GET request, initialize form with current user and profile data
         form = ProfileUpdateForm(user=user, instance=user.profile)
@@ -404,3 +405,52 @@ def favorite_events(request):
         'favorite_events': favorite_events,
         'tbd_events': tbd_events,
     })
+
+# Redirect to the default settings page (change password)
+def redirect_to_change_password(request):
+    return redirect('change_password')
+
+# View for changing the password
+class ChangePasswordView(LoginRequiredMixin, View):
+    template_name = 'ArtsNearMe/change_password.html'
+    success_url = reverse_lazy('profile')  # Redirects back to the same page on success
+
+    def get(self, request):
+        form = PasswordChangeRequestForm(user=request.user)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = PasswordChangeRequestForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your password has been successfully updated.")
+            return redirect(self.success_url)
+        else:
+            messages.error(request, 'Current password is incorrect. Try it again.')
+            return render(request, self.template_name, {'form': form})
+
+
+class DeleteAccountView(LoginRequiredMixin, View):
+    template_name = 'ArtsNearMe/delete_account.html'
+    success_url = reverse_lazy('home')  # Redirect to home after account deletion
+
+    def post(self, request):
+        # Get the current password from the form data
+        current_password = request.POST.get("current_password")
+        
+        # Authenticate user to verify password
+        user = authenticate(username=request.user.username, password=current_password)
+        
+        if user:
+            # If authentication is successful, delete the account
+            request.user.delete()
+            messages.success(request, "Your account has been successfully deleted.")
+            return redirect(self.success_url)
+        else:
+            # Password is incorrect; display an error
+            messages.error(request, "Incorrect password. Please try again.")
+            return render(request, self.template_name)
+        
+    def get(self, request):
+        return render(request, self.template_name)
+

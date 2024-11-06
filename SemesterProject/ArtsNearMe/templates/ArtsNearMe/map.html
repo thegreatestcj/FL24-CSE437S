@@ -7,7 +7,7 @@ Nearby | ArtsNearMe
 {% endblock %}
 
 {% block content %}
-<div style="height: 100%; width: 100%" class="flex w-full h-screen">
+<div style="height: 100%; width: 100%" class="flex w-full h-screen mt-4">
     {{ events|json_script:'events' }}
     {{ google_maps_api_key|json_script:'mapApiKey'}}
     <!-- Location Permission Modal -->
@@ -46,6 +46,9 @@ Nearby | ArtsNearMe
             <div id="places-unavailable" class="hidden text-center text-gray-600 p-4">
                 Places are unavailable due to restricted location access. Please enable location services.
             </div>
+            <div id="no-places-message" class="text-center text-gray-500 my-4 hidden">
+                No places available nearby.<br>Try to search by a keyword.
+            </div>
         </div>
 
         <!-- Event list container -->
@@ -53,6 +56,9 @@ Nearby | ArtsNearMe
             <!-- The list of events will be rendered here -->
             <div id="events-unavailable" class="hidden text-center text-gray-600 p-4">
                 Events are unavailable due to restricted location access. Please enable location services.
+            </div>
+            <div id="no-events-message" class="text-center text-gray-500 my-4 hidden">
+                No events available nearby.<br>Try to search by a keyword.
             </div>
         </div>
     </div>

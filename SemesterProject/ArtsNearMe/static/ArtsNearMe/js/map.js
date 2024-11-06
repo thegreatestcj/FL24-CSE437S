@@ -140,7 +140,7 @@ $(document).ready(function() {
             e.preventDefault();
             const query = $(this).val();
             searchLocation(query);
-            $(this).val('');
+            // $(this).val('');
         }
     });
 
@@ -149,7 +149,18 @@ $(document).ready(function() {
         const query = $('#location-search').val();
         searchLocation(query);
         // Clear the input field after search
-        $('#location-search').val('');
+        // $('#location-search').val('');
+    });
+
+    // Listen for the custom mapReady event
+    $(document).on("mapReady", function() {
+        // Check if the redirectToEvents flag is set
+        if (sessionStorage.getItem('redirectToEvents') === 'true') {
+            // Clear the flag after use
+            sessionStorage.removeItem('redirectToEvents');
+            // Click the events button to switch to the events tab
+            $('#events-button').trigger('click');
+        }
     });
 
 });
@@ -194,6 +205,8 @@ async function initMap() {
             map.setCenter(center);
             console.log("Center confirmed");
             await nearbyPlaceSearch(map, center);
+            // Dispatch the custom event when map is fully loaded
+            $(document).trigger("mapReady");
             const overlay = document.getElementById('map-loading-overlay');
             if (overlay) {
                 overlay.style.display = 'none';
@@ -279,8 +292,8 @@ async function nearbyPlaceSearch(map, center) {
             radius: 50000,
         },
         includedPrimaryTypes: ["art_gallery", "museum"],
-        maxResultCount: 8,
-        // rankPreference: SearchNearbyRankPreference.POPULARITY,
+        maxResultCount: 20,
+        rankPreference: SearchNearbyRankPreference.POPULARITY,
         language: "en-US",
         region: "us",
     };
@@ -478,146 +491,167 @@ function clearMarkers(markerArray) {
 
 function displayPlaces(places) {
     const $placesList = $("#places-list");
+    const $noPlacesMessage = $("#no-places-message");
+    const searchInput = document.getElementById("location-search");
     $placesList.empty();  // Clear any existing content
 
-    places.forEach(place => {
-        // Create place container
-        const $placeContainer = $("<div>").addClass("py-4 border-b last:border-b-0");
+    if (places.length === 0) {
+        $noPlacesMessage.removeClass('hidden');  // Show "No places" message
+        searchInput.setAttribute("autofocus", "");
+    } else {
+        $noPlacesMessage.addClass('hidden');
+        searchInput.removeAttribute("autofocus");
+        places.forEach(place => {
+            // Create place container
+            const $placeContainer = $("<div>").addClass("py-4 border-b last:border-b-0");
+    
+            // Text container to hold info about the place
+            const $textContainer = $("<div>").addClass("flex justify-between items-start mb-4");
+    
+            // Image container for place image
+            const $imageContainer = $("<div>").addClass("w-full h-48 bg-gray-200 rounded-lg overflow-hidden");
+    
+            // Info container with place name and address
+            const $infoContainer = $("<div>").addClass("flex-1 pr-4");
+    
+            const $buttonContainer = $("<div>").addClass("flex flex-col items-end space-y-2");
+    
+            // Create elements for name, location, and description
+            const $nameElement = $("<h4>")
+                .addClass("text-xl font-semibold text-gray-800 leading-none mb-3")
+                .text(place.displayName);
+    
+            const $locationElement = $("<p>")
+                .addClass("text-sm text-gray-400 leading-tight")
+                .text(place.formattedAddress);
+    
+            const $websiteLinkElement = $("<a>")
+                .text("Visit Website")
+                .attr("href", place.websiteURI)
+                .attr("target", "_blank")
+                .attr("rel", "noopener noreferrer")
+                .addClass("bg-slate-600 text-white text-center text-xs font-medium py-2 px-4 rounded hover:bg-slate-800");
+    
+            $buttonContainer.append($websiteLinkElement);
+    
+            // If user is logged in, add 'Add to Favorites' button
+            if (isUserLoggedIn) {
+                const $addFavoritesButton = $("<button>")
+                    .addClass("add-favorite-place-btn text-center bg-emerald-600 text-white text-xs font-medium py-2 px-4 rounded hover:bg-emerald-800")
+                    .text("Add to Favorites")
+                    .data({
+                        "place_id": place.id,
+                        "place_name": place.displayName,
+                        "place_address": place.formattedAddress,
+                        "place_website": place.websiteURI,
+                        "place_longitude": place.location.lng(),
+                        "place_latitude": place.location.lat(),
+                    });
+                $buttonContainer.append($addFavoritesButton);
+            }
+    
+            // Image element for the place
+            const $imageElement = $("<img>")
+                .addClass("object-cover w-full h-full")
+                .attr("src", place.photos[0].getURI({ maxHeight: 400 }))
+                .attr("alt", place.displayName);
+    
+            $imageContainer.append($imageElement);
+    
+            // Append elements to their containers
+            $infoContainer.append($nameElement).append($locationElement);
+            $textContainer.append($infoContainer).append($buttonContainer);
+            $placeContainer.append($textContainer).append($imageContainer);
+    
+            // Append place container to places list
+            $placesList.append($placeContainer);
+        });
+        updateFavoritePlaceButtons(favoritePlaces);
+    }
 
-        // Text container to hold info about the place
-        const $textContainer = $("<div>").addClass("flex justify-between items-start mb-4");
-
-        // Image container for place image
-        const $imageContainer = $("<div>").addClass("w-full h-48 bg-gray-200 rounded-lg overflow-hidden");
-
-        // Info container with place name and address
-        const $infoContainer = $("<div>").addClass("flex-1 pr-4");
-
-        const $buttonContainer = $("<div>").addClass("flex flex-col items-end space-y-2");
-
-        // Create elements for name, location, and description
-        const $nameElement = $("<h4>")
-            .addClass("text-xl font-semibold text-gray-800 leading-none mb-3")
-            .text(place.displayName);
-
-        const $locationElement = $("<p>")
-            .addClass("text-sm text-gray-400 leading-tight")
-            .text(place.formattedAddress);
-
-        const $websiteLinkElement = $("<a>")
-            .text("Visit Website")
-            .attr("href", place.websiteURI)
-            .attr("target", "_blank")
-            .attr("rel", "noopener noreferrer")
-            .addClass("bg-slate-600 text-white text-center text-xs font-medium py-2 px-4 rounded hover:bg-slate-800");
-
-        $buttonContainer.append($websiteLinkElement);
-
-        // If user is logged in, add 'Add to Favorites' button
-        if (isUserLoggedIn) {
-            const $addFavoritesButton = $("<button>")
-                .addClass("add-favorite-place-btn text-center bg-emerald-600 text-white text-xs font-medium py-2 px-4 rounded hover:bg-emerald-800")
-                .text("Add to Favorites")
-                .data({
-                    "place_id": place.id,
-                    "place_name": place.displayName,
-                    "place_address": place.formattedAddress,
-                    "place_website": place.websiteURI,
-                    "place_longitude": place.location.lng(),
-                    "place_latitude": place.location.lat(),
-                });
-            $buttonContainer.append($addFavoritesButton);
-        }
-
-        // Image element for the place
-        const $imageElement = $("<img>")
-            .addClass("object-cover w-full h-full")
-            .attr("src", place.photos[0].getURI({ maxHeight: 400 }))
-            .attr("alt", place.displayName);
-
-        $imageContainer.append($imageElement);
-
-        // Append elements to their containers
-        $infoContainer.append($nameElement).append($locationElement);
-        $textContainer.append($infoContainer).append($buttonContainer);
-        $placeContainer.append($textContainer).append($imageContainer);
-
-        // Append place container to places list
-        $placesList.append($placeContainer);
-    });
-    updateFavoritePlaceButtons(favoritePlaces);
 }
     
 
 function displayEvents(eventList) {
     const $eventsList = $('#events-list');
+    const $noEventsMessage = $("#no-events-message");
+    const searchInput = document.getElementById("location-search");
 
     // Clear the existing events before appending new ones
     $eventsList.empty();
-    console.log(eventList);
+    // console.log(eventList);
 
-    eventList.forEach(event => {
+    if (eventList.length === 0) {
+        $noEventsMessage.removeClass('hidden');  // Show "No events" message
+        searchInput.setAttribute("autofocus", "");  // Set autofocus to guide the user
+    } else {
+        $noEventsMessage.addClass('hidden');  // Hide the message if there are events
+        searchInput.removeAttribute("autofocus");
+        eventList.forEach(event => {
 
-        const $eventCard = $('<div>').addClass('event-card p-4 mb-4 bg-white shadow-md rounded-lg');
-
-        const $textContainer = $('<div>').addClass('justify-between items-start mb-4');
-        const $title = $('<h4>').addClass('text-xl font-semibold text-gray-800 leading-none mb-3').text(event.eventname);
-        const $placeName = $('<p>').addClass('text-md text-gray-700 mb-2').text(event.placename);
-        const $address = $('<p>').addClass('text-sm text-gray-500 mb-4').text(event.address);
-        $textContainer.append($title).append($placeName).append($address);
-
-        const $timeSlotsContainer = $('<div>').addClass('time-slots mb-2');
-        // console.log(typeof event);
-        // console.log(event);
-        const timeSlots = event.eventdates;
-        Object.keys(timeSlots).forEach(timeSlot => {
-            if (timeSlot !== '') {
-                const $slotItem = $('<div>').addClass('flex w-full justify-between items-center mb-1');
-                
-                // Left-aligned time text
-                const $slotTime = $('<span>').addClass('text-sm text-slate-600 my-2').text(timeSlot);
-                
-                // Right-aligned button container
-                const $buttonContainer = $('<div>').addClass('flex space-x-2');
-        
-                const $ticketButton = $('<a>')
-                    .addClass('bg-slate-600 text-white text-xs font-medium py-2 px-4 rounded hover:bg-slate-800')
-                    .attr('href', timeSlots[timeSlot][1])
-                    .attr('target', '_blank')
-                    .text('Tickets');
-                
-                $buttonContainer.append($ticketButton);
-        
-                if (isUserLoggedIn) {
-                    const $saveEventButton = $('<button>')
-                    .addClass('save-event-btn bg-emerald-600 text-white text-xs font-medium py-2 px-4 rounded hover:bg-emerald-800')
-                    .text('Save')
-                    .data({
-                        'event_id': timeSlots[timeSlot][0],
-                        'event_name': event.eventname,
-                        'event_venue': event.placename,
-                        'event_venue_id': event.venue_id,
-                        'event_address': event.address,
-                        'event_start_time': event.date_time, 
-                        // Send back UTC standard instead of local time,
-                        // as the user might retrieve the data in a different timezone later
-                        'event_url': timeSlots[timeSlot][1],
-                    });
-                    $buttonContainer.append($saveEventButton);
+            const $eventCard = $('<div>').addClass('event-card p-4 mb-4 bg-white shadow-md rounded-lg');
+    
+            const $textContainer = $('<div>').addClass('justify-between items-start mb-4');
+            const $title = $('<h4>').addClass('text-xl font-semibold text-gray-800 leading-none mb-3').text(event.eventname);
+            const $placeName = $('<p>').addClass('text-md text-gray-700 mb-2').text(event.placename);
+            const $address = $('<p>').addClass('text-sm text-gray-500 mb-4').text(event.address);
+            $textContainer.append($title).append($placeName).append($address);
+    
+            const $timeSlotsContainer = $('<div>').addClass('time-slots mb-2');
+            // console.log(typeof event);
+            // console.log(event);
+            const timeSlots = event.eventdates;
+            Object.keys(timeSlots).forEach(timeSlot => {
+                if (timeSlot !== '') {
+                    const $slotItem = $('<div>').addClass('flex w-full justify-between items-center mb-1');
+                    
+                    // Left-aligned time text
+                    const $slotTime = $('<span>').addClass('text-sm text-slate-600 my-2').text(timeSlot);
+                    
+                    // Right-aligned button container
+                    const $buttonContainer = $('<div>').addClass('flex space-x-2');
+            
+                    const $ticketButton = $('<a>')
+                        .addClass('bg-slate-600 text-white text-xs font-medium py-2 px-4 rounded hover:bg-slate-800')
+                        .attr('href', timeSlots[timeSlot][1])
+                        .attr('target', '_blank')
+                        .text('Tickets');
+                    
+                    $buttonContainer.append($ticketButton);
+            
+                    if (isUserLoggedIn) {
+                        const $saveEventButton = $('<button>')
+                        .addClass('save-event-btn bg-emerald-600 text-white text-xs font-medium py-2 px-4 rounded hover:bg-emerald-800')
+                        .text('Save')
+                        .data({
+                            'event_id': timeSlots[timeSlot][0],
+                            'event_name': event.eventname,
+                            'event_venue': event.placename,
+                            'event_venue_id': event.venue_id,
+                            'event_address': event.address,
+                            'event_start_time': event.date_time, 
+                            // Send back UTC standard instead of local time,
+                            // as the user might retrieve the data in a different timezone later
+                            'event_url': timeSlots[timeSlot][1],
+                        });
+                        $buttonContainer.append($saveEventButton);
+                    }
+            
+                    // Append the time and button container to the main item container
+                    $slotItem.append($slotTime).append($buttonContainer);
+                    $timeSlotsContainer.append($slotItem);
                 }
-        
-                // Append the time and button container to the main item container
-                $slotItem.append($slotTime).append($buttonContainer);
-                $timeSlotsContainer.append($slotItem);
-            }
-        });
-        
-        
-        $eventCard.append($textContainer).append($timeSlotsContainer);
-        $eventsList.append($eventCard);
-    })
+            });
+            
+            
+            $eventCard.append($textContainer).append($timeSlotsContainer);
+            $eventsList.append($eventCard);
+        })
+    
+        updateFavoriteEventButtons(favoriteEvents); 
+    }
 
-    updateFavoriteEventButtons(favoriteEvents); 
+
 
 }
 
@@ -743,6 +777,16 @@ function enableEventsButton() {
     eventsButton.removeClass('bg-stone-300 text-gray-950 cursor-not-allowed');
     eventsButton.addClass('bg-gray-300 text-gray-800 hover:bg-gray-400');
 }
+
+document.addEventListener("mapReady", function() {
+    // Check if the redirectToEvents flag is set
+    if (sessionStorage.getItem('redirectToEvents') === 'true') {
+        // Clear the flag after use
+        sessionStorage.removeItem('redirectToEvents');
+        // Click the events button to switch to the events tab
+        document.getElementById('events-button').click();
+    }
+});
 
 window.onload = initMap;
 console.log("map loaded");

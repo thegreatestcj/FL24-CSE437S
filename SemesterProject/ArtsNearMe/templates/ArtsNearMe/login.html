@@ -9,9 +9,19 @@ Login | ArtsNearMe
     <div class="w-full max-w-md mx-auto bg-white shadow-lg rounded-lg p-8">
         <h1 class="text-2xl font-bold mb-4">Login</h1>
         {% if messages %}
-        {% for message in messages %}
-            <div class="bg-red-500 text-white p-2 rounded mb-4">{{ message }}</div>
-        {% endfor %}
+            {% for message in messages %}
+                <div class="
+                    {% if message.tags == 'success' %}
+                        bg-emerald-600 text-white
+                    {% elif message.tags == 'error' %}
+                        bg-red-700 text-white
+                    {% else %}
+                        bg-gray-600 text-white
+                    {% endif %}
+                    p-2 rounded mb-4">
+                    {{ message }}
+                </div>
+            {% endfor %}
         {% endif %}
         <form method="POST">
             {% csrf_token %}
@@ -31,6 +41,7 @@ Login | ArtsNearMe
             </div>
             <div class="mt-6">
                 <button type="submit" class="bg-sky-900 text-white px-4 py-2 rounded hover:bg-sky-950">Login</button>
+                <input type="hidden" name="next" value="{% url 'profile' %}">
             </div>
         </form>
         <!-- Password reset link -->

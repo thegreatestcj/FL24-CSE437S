@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordResetForm, SetPasswordForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordResetForm, SetPasswordForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from .models import Profile
@@ -195,3 +195,23 @@ class ProfileUpdateForm(forms.ModelForm):
             raise ValidationError("Please fill in at least one field.")
 
         return cleaned_data
+
+class PasswordChangeRequestForm(PasswordChangeForm):
+    old_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-2 mb-4 bg-gray-100 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'placeholder': 'Current Password'
+        })
+    )
+    new_password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-2 mb-4 bg-gray-100 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'placeholder': 'New Password'
+        })
+    )
+    new_password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-2 mb-4 bg-gray-100 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'placeholder': 'Confirm New Password'
+        })
+    )

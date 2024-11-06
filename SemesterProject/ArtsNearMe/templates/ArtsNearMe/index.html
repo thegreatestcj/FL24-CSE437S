@@ -17,11 +17,22 @@
     {% include 'ArtsNearMe/_navbar.html' %}
 
   </header>
-  <main class="h-full w-full p-4 px-2 mt-8">
+  <main class="h-full w-full p-4 px-2">
     {% block content %}
     {% endblock %}
   </main>
   {% block script %}
   {% endblock %}
 </body>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      const navbar = document.getElementById("navbar");
+      const mainContent = document.querySelector("main");
+
+      if (navbar && mainContent) {
+          const navbarHeight = navbar.offsetHeight;
+          mainContent.style.paddingTop = `${navbarHeight-40}px`;
+      }
+  });
+</script>
 </html>

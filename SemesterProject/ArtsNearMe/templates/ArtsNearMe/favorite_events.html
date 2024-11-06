@@ -21,7 +21,7 @@ Favorite Events | ArtsNearMe
         <!-- Toggle Buttons for List and Calendar Views -->
         <div class="flex space-x-4 mb-4">
             <button id="list-view-btn" class="py-2 px-4 bg-sky-800 text-white rounded">List View</button>
-            <button id="calendar-view-btn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded">Calendar View</button>
+            <button id="calendar-view-btn" class="hidden py-2 px-4 bg-gray-300 text-gray-800 rounded">Calendar View</button>
         </div>
     
         <!-- List View (default) -->
@@ -31,7 +31,7 @@ Favorite Events | ArtsNearMe
                     <h3 class="text-xl font-semibold">{{ event.event_name }}</h3>
                     <p>Location: {{ event.event_venue }}</p>
                     <p>Address: {{ event.event_address }}</p>
-                    <p>Date: {{ event.event_start_time }}</p>
+                    <p class="event-time" data-time="{{ event.event_start_time }}">Date: {{ event.event_start_time }}</p>
                 </div>
             {% endfor %}
         </div>
@@ -42,7 +42,7 @@ Favorite Events | ArtsNearMe
         </div>
     
         <!-- To Be Determined Events Section -->
-        <h3 class="text-lg font-semibold mt-4">To Be Determined Events</h3>
+        <h3 class="text-lg font-semibold mt-4 mb-2">To Be Determined Events</h3>
         <div class="space-y-4">
             {% for event in tbd_events %}
                 <div class="border p-4 rounded shadow-md">

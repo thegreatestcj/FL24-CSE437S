@@ -1,0 +1,44 @@
+{% extends 'ArtsNearMe/settings.html' %}
+
+{% block settings_content %}
+<h2 class="text-2xl font-bold mb-4">Delete Account</h2>
+<p class="mb-4 text-red-600">
+    Warning: Deleting your account is permanent and cannot be undone. This will remove all your data associated with ArtsNearMe.
+</p>
+
+{% if messages %}
+{% for message in messages %}
+    <div class="
+        {% if message.tags == 'success' %}
+            bg-emerald-600 text-white
+        {% elif message.tags == 'error' %}
+            bg-red-700 text-white
+        {% else %}
+            bg-gray-600 text-white
+        {% endif %}
+        p-2 rounded mb-4">
+        {{ message }}
+    </div>
+{% endfor %}
+{% endif %}
+
+<form id="delete-account-form" method="POST" onsubmit="return confirmDeleteAccount()">
+    {% csrf_token %}
+    <div class="mb-4">
+        <label for="current_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+        <input type="password" name="current_password" id="current_password" required
+               class="w-full mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+    </div>
+
+    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-800">
+        Delete Account
+    </button>
+</form>
+
+<!-- Confirmation script -->
+<script>
+    function confirmDeleteAccount() {
+        return confirm("Are you absolutely sure you want to delete your account? This action cannot be undone.");
+    }
+</script>
+{% endblock %}

@@ -1,4 +1,4 @@
-<nav class="fixed top-0 left-0 w-full bg-gray-100 dark:bg-gray-800 p-4 shadow-md z-10">
+<nav id="navbar" class="fixed top-0 left-0 w-full bg-gray-100 dark:bg-gray-800 p-4 shadow-md z-10">
     <div class="container mx-auto flex justify-between items-center">
         <!-- Left: Website Name -->
         <div class="flex-shrink-0">
@@ -37,7 +37,7 @@
                 <div class="relative">
                     <!-- Dropdown Toggle Button -->
                     <button id="user-dropdown-btn" class="focus:outline-none text-gray-800 dark:text-gray-100">
-                        {{ user.username }}
+                        {{ user.profile.alias|default:user.username }}
                         <svg class="w-5 h-5 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -73,15 +73,17 @@
         const dropdownBtn = document.getElementById('user-dropdown-btn');
         const dropdownMenu = document.getElementById('user-dropdown-menu');
     
-        dropdownBtn.addEventListener('click', function () {
+        if (dropdownBtn && dropdownMenu) {
+            dropdownBtn.addEventListener('click', function () {
             dropdownMenu.classList.toggle('hidden');
         });
     
-        // Optional: Hide dropdown when clicking outside
-        document.addEventListener('click', function (event) {
-            if (!dropdownBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
-                dropdownMenu.classList.add('hidden');
-            }
-        });
+            // Optional: Hide dropdown when clicking outside
+            document.addEventListener('click', function (event) {
+                if (!dropdownBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.classList.add('hidden');
+                }
+            });
+        }
     });
     </script>
