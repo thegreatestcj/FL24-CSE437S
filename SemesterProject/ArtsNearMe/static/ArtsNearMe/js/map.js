@@ -4,6 +4,7 @@ let mapInitialized = false;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 let currentLat;
 let currentLng;
+console.log()
 
 
 // Default view is Places. User can switch between Places and Events views.
@@ -152,22 +153,22 @@ $(document).ready(function() {
         // $('#location-search').val('');
     });
 
-    // Listen for the custom mapReady event
-    $(document).on("mapReady", function() {
-        // Check if the redirectToEvents flag is set
-        if (sessionStorage.getItem('redirectToEvents') === 'true') {
-            // Clear the flag after use
-            sessionStorage.removeItem('redirectToEvents');
-            // Click the events button to switch to the events tab
-            $('#events-button').trigger('click');
-        }
-    });
+});
 
+// Listen for the custom mapReady event
+$(document).on("mapReady", function() {
+    // Check if the redirectToEvents flag is set
+    if (sessionStorage.getItem('redirectToEvents') === 'true') {
+        // Clear the flag after use
+        sessionStorage.removeItem('redirectToEvents');
+        // Click the events button to switch to the events tab
+        $('#events-button').trigger('click');
+    }
 });
 
 let events = JSON.parse($('#events').text());
 let mapApiKey = JSON.parse($('#mapApiKey').text());
-// console.log(events)
+console.log(mapApiKey);
 let mapMarkerDetails = events?.mapMarkerDetails;
 let eventList = events?.eventList;
 let map, infoWindow, center;
@@ -427,6 +428,8 @@ function displayPlaceDetails(place) {
         indicatorsContainerId: "place-carousel-indicators"
     });
 
+    loadComments(place.id);
+
     // Show the detail panel and hide the place list container
     $('#place-detail-panel').removeClass('translate-x-full').addClass('show');
     $('#place-list-container').addClass('hidden');
@@ -504,7 +507,7 @@ function displayPlaces(places) {
         places.forEach(place => {
             // Create place container
             const $placeContainer = $("<div>").addClass("py-4 border-b last:border-b-0");
-    
+  
             // Text container to hold info about the place
             const $textContainer = $("<div>").addClass("flex justify-between items-start mb-4");
     
@@ -513,6 +516,12 @@ function displayPlaces(places) {
     
             // Info container with place name and address
             const $infoContainer = $("<div>").addClass("flex-1 pr-4");
+            ($infoContainer).on('click', () => {
+                displayPlaceDetails(place);
+            });
+            $infoContainer.on('mouseenter', () => {
+                $infoContainer.css('cursor', 'pointer');
+            });
     
             const $buttonContainer = $("<div>").addClass("flex flex-col items-end space-y-2");
     
@@ -777,6 +786,163 @@ function enableEventsButton() {
     eventsButton.removeClass('bg-stone-300 text-gray-950 cursor-not-allowed');
     eventsButton.addClass('bg-gray-300 text-gray-800 hover:bg-gray-400');
 }
+
+function loadComments(placeId) {
+    $.get(`/api/v1/map/api/comments/${placeId}/`, function (data) {
+        const { user_comment, other_comments} = data.comments;
+        // Display user's comment
+        const $userCommentSection = $('#user-comment');
+        $userCommentSection.empty();
+        if (user_comment) {
+            const userCommentHtml = `
+                <div class="p-4 border rounded bg-blue-50">
+                    <strong>You</strong>
+                    <p>${user_comment.comment}</p>
+                    <div class="flex items-center">
+                        <span class="text-gray-500 ml-auto text-sm">
+                            Updated at: ${new Date(user_comment.updated_at).toLocaleString()}
+                        </span>
+                    </div>
+                    <div class="flex justify-end">
+                        <button id="edit-button" class="text-sky-800 font-semibold underline mx-3">Edit</button>
+                        <button id="delete-button" class="text-sky-800 font-semibold underline">Delete</button>
+                    </div>
+                </div>
+            `;
+            
+            $userCommentSection.html(userCommentHtml);
+            $('#publish-comment').addClass('hidden');
+            $('#edit-button').on('click', function () {
+                $('#edit-text').val('');
+                $('#edit-comment').removeClass('hidden');
+            })
+
+            $('#delete-button').on('click', function () {
+                deleteUserComment(placeId);
+            })
+
+        } else if (isUserLoggedIn && !user_comment) {
+            $userCommentSection.html('<p class="text-gray-500 mb-2">You don\'t have any comments yet.</p>');
+            $('#publish-comment').removeClass('hidden');
+        }
+
+        // Display other comments
+        const $commentsList = $('#comments-list');
+        $commentsList.empty();
+        other_comments.forEach(comment => {
+            const commentHtml = `
+                <li class="p-4 border rounded">
+                    <strong>${comment.alias}</strong>
+                    <p>${comment.comment}</p>
+                    <div class="flex items-center">
+                        <span class="text-gray-500 ml-auto text-sm">
+                            Updated at: ${new Date(comment.updated_at).toLocaleString()}
+                        </span>
+                    </div>
+                </li>
+            `;
+            $commentsList.append(commentHtml);
+        });
+    });
+    // Submit comment and rating
+    $('#submit-comment-btn').on('click', function () {
+        if (!isUserLoggedIn) {
+            alert('You need to log in to post a comment.');
+        }
+
+        const comment = $('#comment-text').val();
+
+        if (!comment) {
+            alert('Please add a comment.');
+        }
+
+        $.ajax({
+            url: '/api/v1/map/api/comments/add/',
+            type: 'POST',
+            data: JSON.stringify({ place_id: placeId, comment: comment}),
+            contentType: 'application/json',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            success: function () {
+                const newCommentHtml = `
+                    <div class="p-4 border rounded bg-blue-50">
+                        <strong>You</strong>
+                        <p>${comment}</p>
+                        <div class="flex items-center">
+                            <span class="text-gray-500 ml-auto text-sm">Just now</span>
+                        </div>
+                        <div class="flex justify-end">
+                            <button id="edit-button" class="text-sky-800 font-semibold underline mx-3">Edit</button>
+                            <button id="delete-button" class="text-sky-800 font-semibold underline">Delete</button>
+                        </div>
+                    </div>
+                `;
+                $('#user-comment').html(newCommentHtml);
+                $('#comment-text').val('');
+                $('#publish-comment').addClass('hidden');
+            },
+        });
+    });
+
+    $('#edit-comment-btn').on('click', function () {
+        const commentText = $('#edit-text').val();
+
+        $.ajax({
+            url: 'api/comments/add/',
+            type: 'POST',
+            data: JSON.stringify({ place_id: placeId, comment: commentText }),
+            contentType: 'application/json',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            success: function(response) {
+                const newCommentHtml = `
+                    <div class="p-4 border rounded bg-blue-50">
+                        <strong>You</strong>
+                        <p>${commentText}</p>
+                        <div class="flex items-center">
+                            <span class="text-gray-500 ml-auto text-sm">Just now</span>
+                        </div>
+                        <div class="flex justify-end">
+                            <button id="edit-button" class="text-sky-800 font-semibold underline mx-3">Edit</button>
+                            <button id="delete-button" class="text-sky-800 font-semibold underline">Delete</button>
+                        </div>
+                    </div>
+                `;
+                $('#user-comment').html(newCommentHtml);
+                $('#publish-comment').addClass('hidden');
+                $('#edit-comment').addClass('hidden');
+            },
+            error: function(error) {
+                console.error('Error adding comment:', error);
+            }
+        });
+    })
+
+    $('#cancel-comment-btn').on('click', function () {
+        $('#edit-comment').addClass('hidden');
+        $('#edit-text').val('');
+    })
+}
+
+
+// Function to delete a user's comment
+function deleteUserComment(placeId) {
+    $.ajax({
+        url: 'api/comments/delete/',
+        type: 'POST',
+        data: JSON.stringify({ place_id: placeId }),
+        contentType: 'application/json',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        success: function(response) {
+            $('#publish-comment').removeClass('hidden');
+            $('#edit-comment').addClass('hidden');
+            $('#user-comment').addClass('hidden').empty();
+            $('#comment-text').val(''); // Reset the text box
+        },
+        error: function(error) {
+            console.error('Error deleting comment:', error);
+        }
+    });
+}
+
 
 document.addEventListener("mapReady", function() {
     // Check if the redirectToEvents flag is set

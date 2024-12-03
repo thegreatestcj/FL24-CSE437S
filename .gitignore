@@ -7,3 +7,5 @@ db.sqlite3
 .idea
 /SemesterProject/docker-compose.yml
 /SemesterProject/docker-compose-copy.yml
+/SemesterProject/artsnearme-cluster.yaml
+/SemesterProject/k8s/deployment.yaml

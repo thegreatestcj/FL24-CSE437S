@@ -31,9 +31,20 @@ urlpatterns = [
     path('profile/update/', update_profile, name='update_profile'),
     path('profile/favorite-places/', favorite_places, name='favorite_places'),
     path('profile/favorite-events/', favorite_events, name='favorite_events'),
+    path('profile/favorite-places/remove/', remove_favorite_place, name='profile_remove_favorite_place'),
+    path('profile/favorite-events/remove/', remove_favorite_event, name='profile_remove_favorite_event'),
 
     # User settings
     path('profile/settings/', redirect_to_change_password, name='settings'),  # Redirects to change password
     path('profile/settings/change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('profile/settings/delete-account/', DeleteAccountView.as_view(), name='delete_account'),
+
+    # AIGC
+    path('daily-art-knowledge/', DailyArtKnowledgeView.as_view(), name='daily_art_knowledge'),
+    path('chat/', get_chatbot_response, name='chat'),
+
+    # Comments
+    path('map/api/comments/add/', add_or_update_comment, name='add_comment'),
+    path('map/api/comments/delete/', delete_comment, name='delete_comment'),
+    path('map/api/comments/<str:place_id>/', get_place_comments, name='get_place_comments'),
 ]

@@ -1,68 +1,107 @@
 {% extends 'ArtsNearMe/index.html' %}
 {% load static %}
 
+{% block head %}
+<link rel="stylesheet" href="{% static 'ArtsNearMe/css/home.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+{% endblock %}
+
 {% block content %}
-<h1 class="text-3xl font-bold text-center my-4">Discover Arts Near You</h1>
-        
-<!-- Swiper Container -->
-<div class="swiper-container">
-    <div class="swiper-wrapper">
-        <!-- Slide 1: Map Feature -->
-        <div class="swiper-slide flex flex-col items-center justify-center bg-white rounded-lg shadow-lg p-8">
-            <h2 class="text-2xl font-semibold mb-4">Explore Nearby Art Venues</h2>
-            <p class="text-gray-600 text-center">Find galleries, museums, and art events in your area with our interactive map.</p>
-            <a href="{% url 'map' %}">
-                <img src="{% static 'ArtsNearMe/images/creative_map.png' %}" alt="Map Preview" class="w-full h-64 object-cover rounded mt-4">
-            </a>
-        </div>
-
-        <!-- Slide 2: Events Feature -->
-        <div class="swiper-slide flex flex-col items-center justify-center bg-white rounded-lg shadow-lg p-8">
-            <h2 class="text-2xl font-semibold mb-4">Upcoming Art Events</h2>
-            <p class="text-gray-600 text-center">Stay updated with the latest art exhibitions and events happening around you.</p>
-            <a href="{% url 'map' %}#events" onclick="redirectToEvents()">
-                <img src="{% static 'ArtsNearMe/images/art_exhibitions.png' %}" alt="Events Preview" class="w-full h-64 object-cover rounded mt-4">
-            </a>
-        </div>
-
-        <!-- Slide 3: User Profile Feature -->
-        <div class="swiper-slide flex flex-col items-center justify-center bg-white rounded-lg shadow-lg p-8">
-            <h2 class="text-2xl font-semibold mb-4">Create Your Profile</h2>
-            <p class="text-gray-600 text-center">Personalize your experience and save your favorite art spots and events.</p>
-            <a href="{% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'login' %}{% endif %}">
-                <img src="{% static 'ArtsNearMe/images/nice_profile.png' %}" alt="Profile Preview" class="w-full h-64 object-cover rounded mt-4">
-            </a>
-        </div>
-
-        <!-- Slide 4: Community Feature -->
-        <div class="swiper-slide flex flex-col items-center justify-center bg-white rounded-lg shadow-lg p-8">
-            <h2 class="text-2xl font-semibold mb-4">Join the Art Community</h2>
-            <p class="text-gray-600 text-center">Connect with other art enthusiasts, share experiences, and explore together.</p>
-            <a>
-                <img src="{% static 'ArtsNearMe/images/art_community.png' %}" alt="Community Preview" class="w-full h-64 object-cover rounded mt-4">
-            </a>
+<div class="flex h-screen">
+    <!-- Left Half: AI Assistant Tabs -->
+    <div class="w-1/2 bg-gray-100 dark:bg-slate-900 p-6 flex flex-col items-center justify-center shadow-lg">
+        <div class="flex flex-col dynamic-height items-center justify-center">
+            <h1 id="title-line-1" class="text-2xl flex-none font-bold mb-1 text-center text-gray-800 dark:text-white"
+            style="opacity: 0; visibility: hidden;">Learn about</h1>
+            <h1 id="title-line-2" class="text-2xl font-serif flex-none font-bold mb-3 text-center text-gray-800 dark:text-white"
+            style="opacity: 0; visibility: hidden;">Arts Near Me.</h1>
+            <!-- Centered Buttons -->
+            <div id="button-container" class="flex-none justify-center space-x-4 px-2 mt-2 mb-4 font-semibold"
+            style="opacity: 0; visibility: hidden;">
+                <button id="tab-daily" class="tab-button bg-gray-300 text-gray-800 hover:bg-gray-400 py-2 px-4 rounded-lg">
+                    Daily Art Knowledge
+                </button>
+                <button id="tab-chat" class="tab-button bg-gray-300 text-gray-800 hover:bg-gray-400 py-2 px-4 rounded-lg">
+                    Chat with AI
+                </button>
+            </div>
+            <small id="loading-caption" class="hidden text-gray-600 dark:text-gray-400">Loading, please wait...</small>
+            <!-- Tab Contents -->
+            <div id="tab-container" class="tab-content hidden px-2 flex-grow justify-center">
+                <div id="content-daily" class="tab-panel text-gray-800 font-mono dark:text-gray-200">
+                    <p class="text-md">Your daily art insights appear here...</p>
+                    {% if not user.is_authenticated %}
+                    <small class="text-gray-600 dark:text-gray-400">Log in to get more customized suggestions.</small>
+                    <span></span>
+                    <a href="{% url 'login' %}" class="text-blue-500 hover:underline">Log in</a>
+                    {% endif %}
+                </div>
+                <div id="content-discover" class="tab-panel hidden text-gray-800 dark:text-gray-200">
+                    <p class="text-md">(WORK IN PROGRESS) Discover new art places or pieces based on your preferences...</p>
+                    {% if not user.is_authenticated %}
+                    <small class="text-gray-600 dark:text-gray-400">(WORK IN PROGRESS) Log in to get more customized suggestions.</small>
+                    <span></span>
+                    <a href="{% url 'login' %}" class="text-sm text-blue-500 hover:underline">Log in</a>
+                    {% endif %}
+                </div>
+                <div id="content-chat" class="tab-panel hidden text-gray-800">
+                    <div id="chat-container" class="bg-gray-100 p-4 rounded shadow">
+                        <div id="chat-messages" class="mb-4 h-96 overflow-y-auto text-gray-300 bg-white p-2 rounded"></div>
+                        <div class="flex">
+                            <input type="text" id="chat-input" placeholder="Ask Your AI Connoisseur..."
+                                class="flex-grow border text-gray-800 border-gray-300 rounded px-2 py-1 mr-2">
+                            <button id="send-button" class="bg-slate-700 font-semibold text-white px-4 py-2 rounded">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Swiper Pagination & Navigation -->
-    <div class="swiper-pagination mt-4"></div>
+    <!-- Right Half: Functionality Showcase Carousel -->
+    <div class="w-1/2 bg-gray-100 dark:bg-zinc-700 p-6 overflow-hidden relative flex items-center justify-center">
+
+        <div class="swiper-container h-full items-center">
+            <div class="swiper-wrapper flex flex-col dynamic-height items-center justify-center">
+                <!-- Slide 1 -->
+                <div class="swiper-slide text-center">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Explore Nearby Art Venues</h2>
+                    <p class="text-gray-600 dark:text-gray-300">Find galleries, museums, and art events in your area with our interactive map.</p>
+                    <a href="{% url 'map' %}">
+                        <img src="{% static 'ArtsNearMe/images/creative_map.png' %}" alt="Map Preview" class="w-full h-64 object-cover rounded mt-4">
+                    </a>
+                </div>
+                <!-- Slide 2 -->
+                <div class="swiper-slide text-center">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Upcoming Art Events</h2>
+                    <p class="text-gray-600 dark:text-gray-300">Stay updated with the latest art exhibitions and events around you.</p>
+                    <a href="{% url 'map' %}#events">
+                        <img src="{% static 'ArtsNearMe/images/art_exhibitions.png' %}" alt="Events Preview" class="w-full h-64 object-cover rounded mt-4">
+                    </a>
+                </div>
+                <!-- Slide 3 -->
+                <div class="swiper-slide text-center">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Create Your Profile</h2>
+                    <p class="text-gray-600 dark:text-gray-300">Personalize your experience and save your favorite art spots and events.</p>
+                    <a href="{% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'login' %}{% endif %}">
+                        <img src="{% static 'ArtsNearMe/images/nice_profile.png' %}" alt="Profile Preview" class="w-full h-64 object-cover rounded mt-4">
+                    </a>
+                </div>
+                <!-- Slide 4 -->
+                <div class="swiper-slide text-center">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Join the Art Community</h2>
+                    <p class="text-gray-600 dark:text-gray-300">Connect with other art enthusiasts, share experiences, and explore together.</p>
+                    <img src="{% static 'ArtsNearMe/images/art_community.png' %}" alt="Community Preview" class="w-full h-64 object-cover rounded mt-4">
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block script %}
+<script src="{% static "ArtsNearMe/js/home.js" %}?v={{ timestamp }}"></script>
 <script>
-function redirectToEvents() {
-    // Set a flag in sessionStorage to indicate the need to redirect to the events tab
-    sessionStorage.setItem('redirectToEvents', 'true');
-}
-
-// Use jQuery to handle the click event on the events feature link
-$(document).ready(function() {
-    $('[data-target="events"]').on('click', function(event) {
-        event.preventDefault(); // Prevent immediate navigation
-        redirectToEvents();     // Call the redirect function
-        window.location.href = "{% url 'map' %}"; // Redirect to the map page
-    });
-});
+    const user = "{{ request.user }}";  // Pass the username, or null if not logged in
 </script>
 {% endblock %}

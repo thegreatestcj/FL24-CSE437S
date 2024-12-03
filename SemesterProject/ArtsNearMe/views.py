@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
 import environ
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 from django.utils import timezone
 from collections import defaultdict
@@ -31,6 +31,9 @@ from .models import *
 from django.http import JsonResponse
 import json
 from django.views import View
+from django.core.cache import cache
+from openai import OpenAI, OpenAIError
+from django.db.models import Avg
 
 # Initialize environment variables
 env = environ.Env()
@@ -38,10 +41,18 @@ environ.Env.read_env('.env')
 google_maps_api_key = env('GOOGLE_MAPS_API_KEY')
 ticketmaster_api_key = env('TICKETMASTER_API_KEY')
 artsnearme_map_id = env('ARTSNEARME_MAP_ID')
+openai_api_key = env('OPENAI_API_KEY')
 
 def index(request):
     # print(request.user)
-    return render(request, 'ArtsNearMe/home.html', { 'login_status': request.user.is_authenticated, })
+    context = {
+        'login_status': request.user.is_authenticated,
+    }
+    return render(request, 'ArtsNearMe/home.html', context)
+
+# =============================================================================
+# Section 1: Auth
+# =============================================================================
 
 class UserRegisterView(CreateView):
     form_class = RegisterForm
@@ -93,7 +104,6 @@ class UserProfileView(LoginRequiredMixin, TemplateView):
         context['form'] = ProfileUpdateForm(user=self.request.user, instance=self.request.user.profile)
         return context
 
-
 class PasswordResetRequestView(PasswordResetView):
     form_class = PasswordResetRequestForm
     template_name = 'ArtsNearMe/password_reset.html'
@@ -141,6 +151,10 @@ def get_map(request):
         'is_map': True,
     }
     return render(request, 'ArtsNearMe/map.html', context)
+
+# =============================================================================
+# Section 2: Map
+# =============================================================================
 
 # Nearby Map Display
 class MapAPIView(APIView):
@@ -295,6 +309,7 @@ def add_favorite_place(request):
 
 @login_required
 @require_POST
+@csrf_exempt
 def remove_favorite_place(request):
     data = json.loads(request.body)
     try:
@@ -333,6 +348,9 @@ def remove_favorite_event(request):
     except FavoriteEvent.DoesNotExist:
         return JsonResponse({'status': 'not_found'}, status=404)
 
+# =============================================================================
+# Section 3: Profile
+# =============================================================================
 
 @login_required
 def list_favorite_places(request):
@@ -453,4 +471,179 @@ class DeleteAccountView(LoginRequiredMixin, View):
         
     def get(self, request):
         return render(request, self.template_name)
+
+# =============================================================================
+# Section 4: AIGC
+# =============================================================================
+
+# Daily Art Knowledge Tab
+@method_decorator(csrf_exempt, name='dispatch')
+class DailyArtKnowledgeView(View):
+    @staticmethod
+    def get_customized_prompt_for_text(city, user_id=None):
+        return f"""Provide a brief, engaging fact about art or artists related to {city}.
+        However, try to make it like a randomly generated daily tip. Don't formally introduce the city
+         (the user's location) explicitly at the beginning of the response, but you can
+          still explicitly mention user's location for clarity in your speech."""
+
+    def fetch_daily_art_knowledge(self, user, location, local_midnight_seconds):
+        user_id = user.id if user else "anonymous"
+        prompt = "Provide a brief, engaging fact about art history or a famous artist."
+        if location:
+            prompt = self.get_customized_prompt_for_text(location)
+        if user:
+            prompt = self.get_customized_prompt_for_text(location, user_id)
+        cache_key = f'daily_art_knowledge_{user_id}_{location or "global"}'
+        # if user:
+        #     prompt += f" Personalize this for {user.username}."
+        cached_content = cache.get(cache_key)
+        if cached_content:
+            print(cached_content)
+            return cached_content
+
+        try:
+            client = OpenAI(api_key=openai_api_key)
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are an expert in art history, and know where to find good galleries, museums, and art events."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_completion_tokens=800,
+                presence_penalty=2,
+            )
+            fact = response.choices[0].message.content
+            cache.set(cache_key, fact, local_midnight_seconds)
+            return fact
+        except OpenAIError as e:
+            print(f"OpenAI API error: {str(e)}")
+            # Optionally log or raise the exception based on the app's error handling policy
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            return "Could not fetch today's art knowledge. Please try again later."
+
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        time_zone_name = data.get('timeZone', 'UTC')
+
+        # Determine user's local midnight time in seconds
+        try:
+            user_timezone = pytz.timezone(time_zone_name)
+            now = datetime.now(user_timezone)
+            next_midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+            seconds_until_midnight = int((next_midnight - now).total_seconds())
+        except Exception as e:
+            print(f"Error determining user timezone: {e}")
+            seconds_until_midnight = 86400  # Default to 24 hours if timezone calculation fails
+
+        # Fetch city using reverse geocoding
+        location = None
+        if latitude and longitude:
+            try:
+                geocode_url = (
+                    f"https://maps.googleapis.com/maps/api/geocode/json?latlng="
+                    f"{latitude},{longitude}&key={google_maps_api_key}"
+                )
+                response = requests.get(geocode_url)
+                result = response.json()
+                county = result['results'][0]['address_components'][4]['long_name']
+                state = result['results'][0]['address_components'][5]['long_name']
+                country = result['results'][0]['address_components'][6]['long_name']
+                location = f'{county}, {state}, {country}'
+                print(location)
+            except Exception as e:
+                print(f"Error in geocoding: {e}")
+
+        fact = self.fetch_daily_art_knowledge(request.user, location, seconds_until_midnight)
+        return JsonResponse({'fact': fact})
+
+# Chat with AI Tab
+@csrf_exempt
+def get_chatbot_response(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_message = data.get('message', '')
+        conversation_history = data.get('history', [])  # Receive the chat history
+        
+        # Build the messages for OpenAI API
+        messages = conversation_history + [{"role": "user", "content": user_message}, 
+        {"role": "system", "content": "You are an expert in art history, and know where to find good galleries, museums, and art events."}]
+        
+        try:
+            client = OpenAI(api_key=openai_api_key)
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                temperature=0.7,
+                max_completion_tokens=500,
+                presence_penalty=2,
+            )
+            assistant_reply = response.choices[0].message.content
+            return JsonResponse({"reply": assistant_reply, "updated_history": messages})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Invalid request method."}, status=405)
+
+# =============================================================================
+# Section 5: Comment
+# =============================================================================
+
+@login_required
+@csrf_exempt
+def add_or_update_comment(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        place_id = data['place_id']
+        comment_text = data['comment']
+
+        # Update or create comment
+        comment, created = PlaceComment.objects.update_or_create(
+            user=request.user, place_id=place_id,
+            defaults={'comment': comment_text}
+        )
+
+        return JsonResponse({'status': 'success', 'created': created})
+
+@login_required
+@csrf_exempt
+def delete_comment(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        place_id = data['place_id']
+        try:
+            comment = PlaceComment.objects.get(user=request.user, place_id=place_id)
+            comment.delete()
+            return JsonResponse({'status': 'deleted'})
+        except PlaceComment.DoesNotExist:
+            return JsonResponse({'status': 'not_found'}, status=404)
+
+def get_place_comments(request, place_id):
+    user_comment = None
+    if request.user.is_authenticated:
+        user_comment = PlaceComment.objects.filter(place_id=place_id, user=request.user).first()
+    
+    other_comments = PlaceComment.objects.filter(place_id=place_id).exclude(user=request.user).order_by('-created_at')
+    
+    comments_data = {
+        'user_comment': {
+            'comment': user_comment.comment,
+            'created_at': user_comment.created_at,
+            'updated_at': user_comment.updated_at,
+        } if user_comment else None,
+        'other_comments': [
+            {
+                'alias': comment.user.profile.alias if comment.user.profile.alias else comment.user.username,
+                'comment': comment.comment,
+                'created_at': comment.created_at,
+                'updated_at': comment.updated_at,
+            }
+            for comment in other_comments
+        ],
+    }
+
+    return JsonResponse({'comments': comments_data})
 

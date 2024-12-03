@@ -1,6 +1,10 @@
 {% extends 'ArtsNearMe/index.html' %}
 {% load static %}
+
+
+{% block head %}
 <link rel="stylesheet" href="{% static 'ArtsNearMe/css/map.css' %}">
+{% endblock %}
 
 {% block title %}
 Nearby | ArtsNearMe
@@ -24,9 +28,9 @@ Nearby | ArtsNearMe
     <div id="map" style="width: 72%; height: calc(100vh - 64px);" class="w-[72%] h-full overflow-y-auto"></div>
     <!-- Loading Overlay for the Map -->
     <div id="map-loading-overlay" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
-        <div class="text-center text-white">
-            <div class="loader mb-2"></div> <!-- Optional: A spinner loader -->
-            <p>Loading map...</p>
+        <div class="text-center text-white justify-center">
+            <div class="loader mb-2 ml-10"></div> <!-- Optional: A spinner loader -->
+            <p class="text-center">Loading map...</p>
         </div>
     </div>
     <!-- Right Section Container: Place List and Detail Panel -->
@@ -86,6 +90,42 @@ Nearby | ArtsNearMe
                     <!-- Dots will be appended here dynamically -->
                 </div>
             </div>
+            <div id="comments-section" class="mt-6">
+                <h3 class="text-lg font-bold mb-2">Comments</h3>
+            
+                <!-- Reminder for unauthenticated users -->
+                {% if not user.is_authenticated %}
+                <div class="mb-4 text-gray-700">
+                    <p>Please <a href="{% url 'login' %}" class="text-blue-500 underline">log in</a> to post a comment.</p>
+                </div>         
+                {% else %}
+                <!-- User's Comment -->
+                <div id="user-comment-section" class="mb-6">
+                    <div id="publish-comment">
+                        <textarea id="comment-text" rows="3" placeholder="Write your comment here..." class="w-full p-2 border rounded"></textarea>
+                        <div class="flex items-center mt-2">
+                            <button id="submit-comment-btn" class="ml-auto bg-slate-600 text-white px-4 py-2 rounded">Submit</button>
+                        </div>
+                    </div>
+                    <h4 class="text-md font-bold my-2">Your Comment</h4>
+                    <div id="user-comment">
+                        <!-- User's comment will be loaded here dynamically -->
+                    </div>
+                    <div id="edit-comment" class="hidden">
+                        <textarea id="edit-text" rows="3" placeholder="Edit your comment here..." class="w-full p-2 border rounded"></textarea>
+                        <div class="flex justify-end mt-2">
+                            <button id="edit-comment-btn" class="bg-slate-600 text-white mr-2 px-4 py-2 rounded">Submit</button>
+                            <button id="cancel-comment-btn" class="bg-gray-200 px-4 py-2 rounded">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}          
+                <!-- Other Comments -->
+                <h4 class="text-md font-bold my-2">Other Comments</h4>
+                <ul id="comments-list" class="space-y-4">
+                </ul>
+            </div>
+            
         </div>
     </div>
     

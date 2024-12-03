@@ -1,5 +1,6 @@
 <!-- favorite_places.html -->
 {% extends "ArtsNearMe/index.html" %}
+{% load static %}
 
 {% block title %}
 Favorite Places | ArtsNearMe
@@ -26,13 +27,18 @@ Favorite Places | ArtsNearMe
         <!-- List View (default) -->
         <div id="list-view" class="space-y-4">
             {% for place in favorite_places %}
-                <div class="border p-4 rounded shadow-md">
+                <div class="border p-4 rounded shadow-md" id="container-{{ place.place_id }}">
                     <h3 class="text-xl font-semibold">{{ place.place_name }}</h3>
                     <p>Address: {{ place.place_address }}</p>
                     {% if place.place_website %}
                         <p>Website: <a href="{{ place.place_website }}" target="_blank" class="text-blue-600 underline">{{ place.place_website }}</a></p>
                     {% endif %}
-                    <p>Coordinates: {{ place.place_latitude }}, {{ place.place_longitude }}</p>
+                    <button
+                        class="remove-favorite-place-btn bg-red-800 text-white text-xs font-medium my-2 py-2 px-4 rounded hover:bg-red-900"
+                        data-place_id="{{ place.place_id }}"
+                    >
+                        Remove From Favorites
+                    </button>
                 </div>
             {% endfor %}
         </div>
@@ -45,4 +51,7 @@ Favorite Places | ArtsNearMe
 
     </section>
 </div>
+{% endblock %}
+{% block script %}
+<script src="{% static "ArtsNearMe/js/favoritePlaces.js" %}?v={{ timestamp }}"></script>
 {% endblock %}

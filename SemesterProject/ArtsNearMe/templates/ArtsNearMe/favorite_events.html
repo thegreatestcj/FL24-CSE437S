@@ -27,11 +27,17 @@ Favorite Events | ArtsNearMe
         <!-- List View (default) -->
         <div id="list-view" class="space-y-4">
             {% for event in favorite_events %}
-                <div class="border p-4 rounded shadow-md">
+                <div class="border p-4 rounded shadow-md" id="container-{{ event.event_id }}">
                     <h3 class="text-xl font-semibold">{{ event.event_name }}</h3>
                     <p>Location: {{ event.event_venue }}</p>
                     <p>Address: {{ event.event_address }}</p>
                     <p class="event-time" data-time="{{ event.event_start_time }}">Date: {{ event.event_start_time }}</p>
+                    <button
+                        class="remove-favorite-event-btn bg-red-800 text-white text-xs font-medium my-2 py-2 px-4 rounded hover:bg-red-900"
+                        data-event_id="{{ event.event_id }}"
+                    >
+                        Remove
+                    </button>
                 </div>
             {% endfor %}
         </div>

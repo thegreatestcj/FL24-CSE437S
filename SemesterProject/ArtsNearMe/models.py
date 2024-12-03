@@ -68,3 +68,17 @@ class FavoriteEvent(models.Model):
 
     def __str__(self):
         return f"{self.event_name} - {self.user.username}"
+
+class PlaceComment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    place_id = models.CharField(max_length=100)
+    comment = models.TextField()
+    # rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'place_id')
+
+    def __str__(self):
+        return f"{self.user.username} on {self.place_id}"

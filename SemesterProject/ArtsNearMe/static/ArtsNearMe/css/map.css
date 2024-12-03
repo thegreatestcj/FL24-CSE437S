@@ -34,3 +34,9 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.star {
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
