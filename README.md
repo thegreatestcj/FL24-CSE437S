@@ -1,5 +1,7 @@
 # FL24-CSE437S Semester Project by Rylan Tang
 
+12/18/24: I re-push this semester project to my own GitHub profile.
+
 ## Folder Structure
 Top Directory, 'SemesterProject', is the **project folder/root directory**.
 The virtual environment directory should be in the same directory with the project folder, and it should be ignored by GitHub as they are specific to developers' devices.

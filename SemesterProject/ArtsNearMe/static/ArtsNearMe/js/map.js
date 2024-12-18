@@ -428,7 +428,7 @@ function displayPlaceDetails(place) {
         indicatorsContainerId: "place-carousel-indicators"
     });
 
-    loadComments(place.id);
+    // loadComments(place.id);
 
     // Show the detail panel and hide the place list container
     $('#place-detail-panel').removeClass('translate-x-full').addClass('show');
